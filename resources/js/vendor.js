@@ -488,25 +488,55 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Logout
-    const handleLogout = () => {
-        const confirmModalText = document.getElementById('confirm-modal-text');
-        confirmModalText.textContent = 'Are you sure you want to log out?';
-        const confirmBtn = document.getElementById('confirm-modal-btn');
-        confirmBtn.style.backgroundColor = '#A38D8C';
+    // Logout
+const handleLogout = () => {
+    const confirmModalText = document.getElementById('confirm-modal-text');
+    if (confirmModalText) confirmModalText.textContent = 'Are you sure you want to log out?';
+
+    const confirmBtn = document.getElementById('confirm-modal-btn');
+    if (confirmBtn) {
+        confirmBtn.style.backgroundColor = '#A38D8C'; // This matches your vendor CSS
         confirmBtn.textContent = 'Log Out';
-        showModal('confirm-modal');
+
+        // THIS IS THE NEW LOGIC
         confirmBtn.onclick = () => {
             hideAllModals();
             showToast('Logging out...');
-            // Add redirect to landing page
-            setTimeout(() => {
-                window.location.href = '../public/landingpage.html';
-            }, 1000);
-        };
-    };
-    document.getElementById('logout-btn').addEventListener('click', handleLogout);
-    document.getElementById('profile-logout-btn').addEventListener('click', handleLogout);
 
+            // Get CSRF token from the meta tag
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            // Create a dynamic form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/logout'; // This is the route Breeze created
+
+            // Add the CSRF token as an input
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = '_token';
+            tokenInput.value = token;
+            form.appendChild(tokenInput);
+
+            // Add form to page, submit it, then remove it
+            document.body.appendChild(form);
+            form.submit();
+        };
+        // END OF NEW LOGIC
+    }
+    showModal('confirm-modal');
+};
+
+// Add null checks for both logout buttons
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', handleLogout);
+}
+
+const profileLogoutBtn = document.getElementById('profile-logout-btn');
+if (profileLogoutBtn) {
+    profileLogoutBtn.addEventListener('click', handleLogout);
+}
     // --- FORM SUBMISSION HANDLERS ---
     document.getElementById('staff-form').addEventListener('submit', function(e) {
         e.preventDefault();

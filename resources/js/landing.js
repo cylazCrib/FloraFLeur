@@ -1,242 +1,273 @@
+// --- Wait for the entire page to load before running any JS ---
 document.addEventListener('DOMContentLoaded', function() {
-            // DOM Elements
-            const loginBtn = document.getElementById('login-btn');
-            const signupBtn = document.getElementById('signup-btn');
-            const signupStoreBtn = document.getElementById('signup-store-btn');
-            const adminLoginBtn = document.getElementById('admin-login-btn');
-            const registerShopBtn = document.getElementById('register-shop-btn');
-            const mobileRegisterBtn = document.getElementById('mobile-register-btn');
-            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-            const mobileMenu = document.getElementById('mobile-menu');
-            
-            const signinModal = document.getElementById('signin-modal');
-            const signupModal = document.getElementById('signup-modal');
-            const adminLoginModal = document.getElementById('admin-login-modal');
-            const signupStoreModal = document.getElementById('signup-store-modal');
-            
-            const closeModalBtns = document.querySelectorAll('[data-close-modal]');
-            
-            const signinForm = document.getElementById('signin-form');
-            const signupForm = document.getElementById('signup-form');
-            const adminLoginForm = document.getElementById('admin-login-form');
-            const storeSignupForm = document.getElementById('store-signup-form');
-            
-            // === MODIFICATION START ===
-            const loginAsVendorCheckbox = document.getElementById('login-as-vendor');
-            // === MODIFICATION END ===
 
-            const goToSignupLink = document.getElementById('go-to-signup');
-            const goToSigninLink = document.getElementById('go-to-signin');
-            const backToUserLoginLink = document.getElementById('back-to-user-login');
-            const forgotPasswordLink = document.getElementById('forgot-password');
+    // --- Get the CSRF token from the meta tag ---
+    const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfTokenElement ? csrfTokenElement.getAttribute('content') : '';
 
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toast-message');
+    // --- DOM Elements ---
+    const loginBtn = document.getElementById('login-btn');
+    const signupBtn = document.getElementById('signup-btn');
+    const signupStoreBtn = document.getElementById('signup-store-btn');
+    const adminLoginBtn = document.getElementById('admin-login-btn');
+    const registerShopBtn = document.getElementById('register-shop-btn');
+    const mobileRegisterBtn = document.getElementById('mobile-register-btn');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    const signinModal = document.getElementById('signin-modal');
+    const signupModal = document.getElementById('signup-modal');
+    const adminLoginModal = document.getElementById('admin-login-modal');
+    const signupStoreModal = document.getElementById('signup-store-modal');
+    
+    const closeModalBtns = document.querySelectorAll('[data-close-modal]');
+    
+    // --- Forms ---
+    const signinForm = document.getElementById('signin-form');
+    const signupForm = document.getElementById('signup-form');
+    const adminLoginForm = document.getElementById('admin-login-form');
+    const storeSignupForm = document.getElementById('store-signup-form');
 
-            // Utility Functions
-            function showModal(modal) {
-                if (modal) {
-                    hideAllModals();
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
-                    document.body.style.overflow = 'hidden';
-                }
+    const goToSignupLink = document.getElementById('go-to-signup');
+    const goToSigninLink = document.getElementById('go-to-signin');
+    const backToUserLoginLink = document.getElementById('back-to-user-login');
+    const forgotPasswordLink = document.getElementById('forgot-password');
+
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+
+    // --- Utility Functions ---
+    function showModal(modal) {
+        if (modal) {
+            hideAllModals();
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    function hideAllModals() {
+        [signinModal, signupModal, adminLoginModal, signupStoreModal].forEach(modal => {
+            if(modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
             }
-            
-            function hideAllModals() {
-                [signinModal, signupModal, adminLoginModal, signupStoreModal].forEach(modal => {
-                    if(modal) {
-                        modal.classList.add('hidden');
-                        modal.classList.remove('flex');
-                    }
-                });
-                document.body.style.overflow = 'auto';
-            }
-            
-            function showToast(message, type = 'success') {
-                toastMessage.textContent = message;
-                
-                // Set color based on type
-                if (type === 'error') {
-                    toast.classList.remove('bg-green-700');
-                    toast.classList.add('bg-red-600');
-                } else {
-                    toast.classList.remove('bg-red-600');
-                    toast.classList.add('bg-green-700');
-                }
-                
-                toast.classList.remove('hidden');
-                setTimeout(() => {
-                    toast.classList.add('hidden');
-                }, 3000);
-            }
-
-            // --- Event Listeners ---
-            if (loginBtn) loginBtn.addEventListener('click', () => showModal(signinModal));
-            if (signupBtn) signupBtn.addEventListener('click', () => showModal(signupModal));
-            if (signupStoreBtn) signupStoreBtn.addEventListener('click', () => showModal(signupStoreModal));
-            if (adminLoginBtn) adminLoginBtn.addEventListener('click', () => showModal(adminLoginModal));
-            if (registerShopBtn) registerShopBtn.addEventListener('click', () => showModal(signupStoreModal));
-            if (mobileRegisterBtn) mobileRegisterBtn.addEventListener('click', () => {
-                showModal(signupStoreModal);
-                mobileMenu.classList.add('hidden');
-            });
-            
-            // Mobile Menu Toggle
-            if (mobileMenuBtn) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
-            
-            // Close mobile menu when clicking outside
-            document.addEventListener('click', (e) => {
-                if (mobileMenu && !mobileMenu.contains(e.target) && mobileMenuBtn && !mobileMenuBtn.contains(e.target)) {
-                    mobileMenu.classList.add('hidden');
-                }
-            });
-
-            // --- Modal Controls ---
-            closeModalBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    hideAllModals();
-                });
-            });
-
-            window.addEventListener('click', (e) => {
-                if (e.target.classList.contains('modal-overlay')) {
-                    hideAllModals();
-                }
-            });
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === "Escape") {
-                    hideAllModals();
-                }
-            });
-
-            // --- Form Switching ---
-            if(goToSignupLink) goToSignupLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                hideAllModals();
-                showModal(signupModal);
-            });
-
-            if(goToSigninLink) goToSigninLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                hideAllModals();
-                showModal(signinModal);
-            });
-            
-            if(backToUserLoginLink) backToUserLoginLink.addEventListener('click', (e) => {
-                 e.preventDefault();
-                hideAllModals();
-                showModal(signinModal);
-            });
-            
-            if(forgotPasswordLink) forgotPasswordLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                showToast('Password reset instructions sent to your email!');
-                hideAllModals();
-            });
-
-            // --- Form Submissions ---
-            if(signinForm) signinForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                // Check if the vendor checkbox is checked
-                if (loginAsVendorCheckbox && loginAsVendorCheckbox.checked) {
-                    // Log in as Vendor
-                    showToast('Vendor login successful! Redirecting to your dashboard...');
-                    setTimeout(() => {
-                        // *** CORRECTED PATH ***
-                        window.location.href = '/vendor/dashboard'; 
-                        hideAllModals();
-                    }, 1500);
-                } else {
-                    // === FIX 1: ADDED CUSTOMER REDIRECT ===
-                    // Log in as Customer
-                    showToast('Welcome back! You have successfully signed in.');
-                    setTimeout(() => {
-                        // *** CORRECTED PATH ***
-                        window.location.href = '/customer/dashboard'; 
-                        hideAllModals();
-                    }, 1500);
-                    // === END FIX ===
-                }
-            });
-            
-            if(signupForm) signupForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                // === FIX 2: ADDED CUSTOMER REDIRECT ===
-                showToast('Account created successfully! Welcome to Flora Fleur.');
-                setTimeout(() => {
-                    // *** CORRECTED PATH ***
-                    window.location.href = '/customer/dashboard';
-                    hideAllModals();
-                }, 1500);
-                // === END FIX ===
-            });
-            
-            if(adminLoginForm) adminLoginForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                showToast('Admin login successful! Redirecting to dashboard...');
-                setTimeout(() => {
-                    // *** CORRECTED PATH ***
-                    window.location.href = '/admin/dashboard';
-                    hideAllModals();
-                }, 1500);
-            });
-            
-            if(storeSignupForm) storeSignupForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                showToast('Your shop registration has been submitted for review!');
-                hideAllModals();
-            });
-
-            // File input label
-            const fileUpload = document.getElementById('file-upload');
-            const fileLabel = document.getElementById('file-label-text');
-            if (fileUpload && fileLabel) {
-                const defaultLabelText = fileLabel.innerText;
-                fileUpload.addEventListener('change', () => {
-                    if (fileUpload.files.length > 0) {
-                        fileLabel.innerText = fileUpload.files[0].name;
-                    } else {
-                        fileLabel.innerText = defaultLabelText;
-                    }
-                });
-            }
-
-            // Smooth scrolling for navigation links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const targetId = this.getAttribute('href');
-                    if (targetId === '#') return;
-                    
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        window.scrollTo({
-                            top: targetElement.offsetTop - 80,
-                            behavior: 'smooth'
-                        });
-                        
-                        // Close mobile menu if open
-                        if (mobileMenu) {
-                           mobileMenu.classList.add('hidden');
-                        }
-                    }
-                });
-            });
-
-            // Add to cart buttons
-            document.querySelectorAll('.bg-green-700').forEach(button => {
-                button.addEventListener('click', function() {
-                    // Check if the click is inside a modal, if so, don't show toast
-                    if (this.closest('.modal-overlay')) return;
-                    showToast('Item added to cart!');
-                });
-            });
         });
+        document.body.style.overflow = 'auto';
+    }
+    
+    function showToast(message, type = 'success') {
+        if (!toastMessage) return;
+        toastMessage.textContent = message;
+        
+        if (type === 'error') {
+            toast.classList.remove('bg-green-700');
+            toast.classList.add('bg-red-600');
+        } else {
+            toast.classList.remove('bg-red-600');
+            toast.classList.add('bg-green-700');
+        }
+        
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
+
+    // --- Modal Controls ---
+    if (loginBtn) loginBtn.addEventListener('click', () => showModal(signinModal));
+    if (signupBtn) signupBtn.addEventListener('click', () => showModal(signupModal));
+    if (signupStoreBtn) signupStoreBtn.addEventListener('click', () => showModal(signupStoreModal));
+    if (adminLoginBtn) adminLoginBtn.addEventListener('click', () => showModal(adminLoginModal));
+    if (registerShopBtn) registerShopBtn.addEventListener('click', () => showModal(signupStoreModal));
+    
+    if (mobileRegisterBtn) mobileRegisterBtn.addEventListener('click', () => {
+        showModal(signupStoreModal);
+        if (mobileMenu) mobileMenu.classList.add('hidden');
+    });
+    
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+            if (mobileMenu) mobileMenu.classList.toggle('hidden');
+        });
+    }
+    
+    document.addEventListener('click', (e) => {
+        if (mobileMenu && !mobileMenu.contains(e.target) && mobileMenuBtn && !mobileMenuBtn.contains(e.target)) {
+            mobileMenu.classList.add('hidden');
+        }
+    });
+
+    closeModalBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            hideAllModals();
+        });
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+            hideAllModals();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === "Escape") {
+            hideAllModals();
+        }
+    });
+
+    // --- Form Switching ---
+    if(goToSignupLink) goToSignupLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        hideAllModals();
+        showModal(signupModal);
+    });
+
+    if(goToSigninLink) goToSigninLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        hideAllModals();
+        showModal(signinModal);
+    });
+    
+    if(backToUserLoginLink) backToUserLoginLink.addEventListener('click', (e) => {
+         e.preventDefault();
+        hideAllModals();
+        showModal(signinModal);
+    });
+    
+    if(forgotPasswordLink) forgotPasswordLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = '/forgot-password';
+    });
+
+    // --- Helper function to handle responses (Redirect vs JSON) ---
+    async function handleResponse(response, form, errorDiv) {
+        const contentType = response.headers.get("content-type");
+        
+        // If the server sends back HTML (a redirect), follow it
+        if (contentType && contentType.indexOf("text/html") !== -1) {
+            if (response.redirected) {
+                 window.location.href = response.url;
+            } else {
+                 window.location.reload();
+            }
+            return;
+        }
+
+        // Otherwise, parse JSON
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast(data.message || 'Success! Redirecting...');
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.reload();
+            }
+        } else {
+            if (data.errors) {
+                 let errorMessages = '';
+                 const errors = Array.isArray(data.errors) ? data.errors : Object.values(data.errors).flat();
+                 errors.forEach(err => errorMessages += `<li>${err}</li>`);
+                 errorDiv.innerHTML = `<ul>${errorMessages}</ul>`;
+            } else {
+                errorDiv.innerHTML = data.message || 'An error occurred.';
+            }
+            errorDiv.classList.remove('hidden');
+        }
+    }
+
+    // --- Generic Form Handler ---
+    async function submitFormWithToken(e, form, errorDivId) {
+        e.preventDefault();
+        const errorDiv = document.getElementById(errorDivId);
+        if (errorDiv) {
+            errorDiv.innerHTML = '';
+            errorDiv.classList.add('hidden');
+        }
+
+        const formData = new FormData(form);
+        if (csrfToken) formData.append('_token', csrfToken); 
+
+        try {
+            // --- THIS IS THE FIX ---
+            // Use getAttribute('action') so we don't accidentally get the current page URL
+            // if the action attribute is missing.
+            const actionUrl = form.getAttribute('action') || form.dataset.action;
+            
+            const response = await fetch(actionUrl, {
+                method: 'POST',
+                body: formData,
+                headers: { 
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken 
+                },
+            });
+            await handleResponse(response, form, errorDiv);
+        } catch (error) {
+            console.error(error);
+            if (errorDiv) {
+                errorDiv.innerHTML = 'Connection error. Please refresh and try again.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+    }
+
+    // --- Attach Event Listeners to Forms ---
+    if (signinForm) {
+        signinForm.addEventListener('submit', (e) => submitFormWithToken(e, signinForm, 'signin-errors'));
+    }
+
+    if (adminLoginForm) {
+        adminLoginForm.addEventListener('submit', (e) => submitFormWithToken(e, adminLoginForm, 'admin-errors'));
+    }
+
+    if (signupForm) {
+        signupForm.addEventListener('submit', (e) => submitFormWithToken(e, signupForm, 'signup-errors'));
+    }
+
+    if (storeSignupForm) {
+        storeSignupForm.addEventListener('submit', (e) => submitFormWithToken(e, storeSignupForm, 'store-signup-errors'));
+    }
+
+    // --- File Input Label ---
+    const fileUpload = document.getElementById('file-upload');
+    const fileLabel = document.getElementById('file-label-text');
+    if (fileUpload && fileLabel) {
+        const defaultLabelText = fileLabel.innerText;
+        fileUpload.addEventListener('change', () => {
+            if (fileUpload.files.length > 0) {
+                fileLabel.innerText = fileUpload.files[0].name;
+            } else {
+                fileLabel.innerText = defaultLabelText;
+            }
+        });
+    }
+
+    // --- Smooth Scrolling ---
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+                if (mobileMenu) mobileMenu.classList.add('hidden');
+            }
+        });
+    });
+
+    // --- Add to Cart Buttons ---
+    document.querySelectorAll('.bg-green-700').forEach(button => {
+        button.addEventListener('click', function() {
+            if (this.closest('.modal-overlay')) return;
+            showToast('Item added to cart!');
+        });
+    });
+
+});
