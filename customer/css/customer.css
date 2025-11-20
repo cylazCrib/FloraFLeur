@@ -1,0 +1,140 @@
+/* Base Styles */
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Form Input Styles (Dark Background) */
+.form-input-custom {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    color: white;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.form-input-custom::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.form-input-custom:focus {
+    outline: none;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Custom Radio Buttons (Dark Background) */
+.form-radio-custom {
+    appearance: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+.form-radio-custom:checked {
+    background-color: white;
+    border-color: white;
+}
+
+.form-radio-custom:checked::after {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #4a4a3a; /* olive-dark */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Page Visibility */
+.page-content {
+    display: none;
+}
+
+.app-container {
+    display: none;
+}
+
+.active {
+    display: flex;
+}
+
+/* Quantity Button Styles */
+.quantity-btn {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.quantity-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Account Page Edit Styles */
+.account-display {
+    display: block;
+}
+
+.account-input {
+    display: none;
+}
+
+.account-card.is-editing .account-display {
+    display: none;
+}
+
+.account-card.is-editing .account-input {
+    display: block;
+}
+
+.account-card.is-editing .account-input-field {
+    background-color: rgba(255, 255, 255, 0.7);
+    color: #333;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    width: 100%;
+}
+
+.account-card.is-editing .account-input-field:focus {
+    outline: none;
+    border-color: #4a4a3a;
+    box-shadow: 0 0 0 2px rgba(74, 74, 58, 0.5);
+}
+
+/* Favorite Button Active State */
+.favorite-btn.is-favorite svg {
+    fill: #ef4444; /* red-500 */
+    stroke: #ef4444;
+    color: #ef4444;
+}
+
+.favorite-btn svg {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Payment Button Active State */
+.payment-btn.selected {
+    background-color: #86a873; /* dashboard-btn */
+    color: white;
+    border-color: #86a873;
+}

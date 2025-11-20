@@ -24,45 +24,43 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request)
     {
-        // 1. Log the user in
+        // 1. Attempt login
         $request->authenticate();
 
-        // 2. Regenerate session
+        // 2. Regenerate session (Security)
         $request->session()->regenerate();
 
-        // 3. Get the user
+        // 3. Get user and determine redirect URL (Using PATHS to prevent 500 errors)
         $user = Auth::user();
-
-        // 4. Determine redirect based on role
-        $redirectUrl = route('customer.dashboard'); // Default
+        $redirectUrl = '/customer/dashboard'; // Default path
         $message = 'Login successful!';
 
         if ($user->role === 'admin') {
-            $redirectUrl = route('admin.dashboard');
+            $redirectUrl = '/admin/dashboard'; // Explicit path
             $message = 'Admin login successful! Redirecting...';
         } 
         elseif ($user->role === 'vendor') {
-            // Check checkbox for vendors
+            // Check the vendor checkbox
             if ($request->has('login_as_vendor') || $request->input('login_as_vendor') == 'on') {
-                $redirectUrl = route('vendor.dashboard');
+                $redirectUrl = '/vendor/dashboard'; // Explicit path
                 $message = 'Vendor login successful! Redirecting...';
             } else {
-                // Vendor forgot to check the box -> Log them out
+                // Force logout if checkbox is missing
                 Auth::guard('web')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
+                // Return error
                 if ($request->wantsJson()) {
                     return response()->json([
-                        'message' => 'To log in as a vendor, please check the "Log in as Vendor" box.',
-                        'errors' => ['login_as_vendor' => ['Please check the vendor box.']]
+                        'message' => 'To log in as a vendor, please check the "Log in as Vendor" box.'
                     ], 422);
                 }
                 return back()->withErrors(['email' => 'To log in as a vendor, please check the "Log in as Vendor" box.']);
             }
         }
 
-        // 5. Return JSON response (for your Landing Page Modals)
+        // 4. Handle AJAX/Fetch requests (Landing Page Modals)
         if ($request->wantsJson()) {
             return response()->json([
                 'message' => $message,
@@ -70,7 +68,7 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        // 6. Fallback for normal form submits
+        // 5. Handle Standard Login
         return redirect($redirectUrl);
     }
 
@@ -80,11 +78,8 @@ class AuthenticatedSessionController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
-
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
-
         return redirect('/');
     }
 }

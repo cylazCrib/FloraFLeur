@@ -12,7 +12,7 @@
             <i class="fa-regular fa-user" data-modal-target="profile-modal"></i>
         </div>
     </header>
-
+    
     <section class="content-container" style="margin-bottom: 2rem;">
         <div class="content-header">
             <h2>Shop Owners</h2>
@@ -33,8 +33,8 @@
                             data-status="{{ $shop->status }}"
                             data-date="{{ $shop->created_at->format('M d, Y') }}"
                             data-location="{{ $shop->address ?? 'N/A' }}">
-
-                            <td>{{ $shop->user->name }}</td>
+                            
+                            <td>{{ $shop->user->name ?? 'Unknown User' }}</td>
                             <td>{{ $shop->name }}</td>
                             <td class="text-center">
                                 <button data-action="viewActivity" class="action-button blue" style="padding: 0.5rem 1rem; font-size: 0.85rem;">View Activity</button>
@@ -49,12 +49,12 @@
             </table>
         </div>
     </section>
-
+    
     <section class="content-container">
         <div class="content-header">
             <h2>Send Notification</h2>
         </div>
-
+        
         <form id="owner-notification-form" class="styled-form" action="{{ route('admin.owners.notify') }}" method="POST">
             @csrf
             <div class="form-group">
