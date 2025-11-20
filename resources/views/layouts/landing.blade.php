@@ -123,7 +123,7 @@
                     <a href="{{ route('password.request') }}" id="forgot-password" class="font-medium text-gray-300 hover:text-white transition">Forgot Password?</a>
                 </div>
                 <div class="flex items-center text-sm">
-                    <input id="login-as-vendor" name="login_as_vendor" type="checkbox" class="h-4 w-4 rounded border-gray-300 bg-transparent">
+                   <input id="login-as-vendor" name="login_as_vendor" type="checkbox" class="h-4 w-4 rounded border-gray-300 bg-transparent">
                     <label for="login-as-vendor" class="ml-2 block text-gray-300">Log in as Vendor</label>
                 </div>
                 <div>

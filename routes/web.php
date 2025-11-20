@@ -1,14 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Hash;
+// We don't need to import Auth here anymore since we moved the check to the controller
 
-// Import all the controllers we are using
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\RegisteredShopController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\VendorProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,16 +18,17 @@ use App\Http\Controllers\CustomerController;
 |--------------------------------------------------------------------------
 */
 
-// 1. Public Landing Page (This is your real homepage)
-// THIS IS THE FIX: It points '/' to your custom controller.
+// 1. Public Landing Page
 Route::get('/', [LandingPageController::class, 'show'])->name('landing');
 
-// 2. Public Shop Registration Form Handler
+// 2. Public Shop Registration
 Route::post('/register-shop', [RegisteredShopController::class, 'store'])->name('shop.register');
 
 
 // 3. Admin Routes
-Route::prefix('admin')->name('admin.')->group(function () {
+// [FIX] Removed the function causing the error. 
+// We now rely on AdminController to handle the security check.
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/registrations', [AdminController::class, 'registrations'])->name('registrations.index');
     Route::patch('/registrations/{shop}/approve', [AdminController::class, 'approveShop'])->name('registrations.approve');
@@ -40,19 +43,25 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 
 // 4. Vendor Routes
+// [FIX] Removed the function causing the error. Security is now in VendorController.
 Route::prefix('vendor')->name('vendor.')->group(function () {
     Route::get('/dashboard', [VendorController::class, 'dashboard'])->name('dashboard');
+    
+    // --- PRODUCT CRUD ROUTES ---
+    Route::get('/products', [VendorProductController::class, 'index'])->name('products.index');
+    Route::post('/products', [VendorProductController::class, 'store'])->name('products.store');
+    Route::post('/products/{product}/update', [VendorProductController::class, 'update'])->name('products.update');
+    Route::delete('/products/{product}', [VendorProductController::class, 'destroy'])->name('products.destroy');
 });
 
 
 // 5. Customer Routes
-Route::prefix('customer')->name('customer.')->group(function () {
+Route::middleware(['auth'])->prefix('customer')->name('customer.')->group(function () {
     Route::get('/dashboard', [CustomerController::class, 'dashboard'])->name('customer.dashboard');
 });
 
 
-// 6. Default Breeze Auth Routes
-// The default '/dashboard' route is removed, which is correct.
+// 6. Default Auth Routes
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -60,3 +69,4 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+

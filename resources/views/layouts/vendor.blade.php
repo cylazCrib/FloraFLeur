@@ -26,11 +26,36 @@
             </div>
             <nav class="navigation">
                 <ul>
-                    <li><a class="nav-item active" data-target="dashboard-view"><i class="fa-solid fa-table-cells-large"></i> Dashboard</a></li>
-                    <li><a class="nav-item" data-target="orders-view"><i class="fa-solid fa-truck-fast"></i> Orders & Deliveries</a></li>
-                    <li><a class="nav-item" data-target="inventory-view"><i class="fa-solid fa-box-archive"></i> Inventory</a></li>
-                    <li><a class="nav-item" data-target="products-view"><i class="fa-solid fa-boxes-stacked"></i> Manage Products</a></li>
-                    <li><a class="nav-item" data-target="owners-view"><i class="fa-solid fa-user-group"></i> Owners & Notifs</a></li>
+                    <li>
+                        <a href="{{ route('vendor.dashboard') }}" 
+                           class="nav-item {{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}">
+                            <i class="fa-solid fa-table-cells-large"></i> Dashboard
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="#" class="nav-item">
+                            <i class="fa-solid fa-truck-fast"></i> Orders & Deliveries
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item">
+                            <i class="fa-solid fa-box-archive"></i> Inventory
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('vendor.products.index') }}" 
+                           class="nav-item {{ request()->routeIs('vendor.products.*') ? 'active' : '' }}">
+                            <i class="fa-solid fa-boxes-stacked"></i> Manage Products
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#" class="nav-item">
+                            <i class="fa-solid fa-user-group"></i> Owners & Notifs
+                        </a>
+                    </li>
                 </ul>
             </nav>
             <div class="sidebar-bottom">

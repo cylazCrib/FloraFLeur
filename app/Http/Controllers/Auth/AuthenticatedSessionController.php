@@ -22,30 +22,19 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-   /**
-     * Handle an incoming authentication request.
-     */
     public function store(LoginRequest $request)
     {
-        // 1. Attempt to authenticate the user
+        // 1. Log the user in
         $request->authenticate();
 
-        // 2. Regenerate the session
+        // 2. Regenerate session
         $request->session()->regenerate();
 
-        // 3. Get the logged-in user
+        // 3. Get the user
         $user = Auth::user();
 
-      // --- ADD THIS LINE TEMPORARILY ---
-        dd([
-            'User Email' => $user->email,
-            'User Role' => $user->role,
-            'Is Admin?' => ($user->role === 'admin'),
-            'Role Length' => strlen($user->role), // Checks for hidden spaces
-        ]);
-        // ---------------------------------
-
-        $redirectUrl = route('customer.dashboard');
+        // 4. Determine redirect based on role
+        $redirectUrl = route('customer.dashboard'); // Default
         $message = 'Login successful!';
 
         if ($user->role === 'admin') {
@@ -53,23 +42,27 @@ class AuthenticatedSessionController extends Controller
             $message = 'Admin login successful! Redirecting...';
         } 
         elseif ($user->role === 'vendor') {
-            // Check if they *intended* to log in as a vendor
-            if ($request->has('login_as_vendor')) {
+            // Check checkbox for vendors
+            if ($request->has('login_as_vendor') || $request->input('login_as_vendor') == 'on') {
                 $redirectUrl = route('vendor.dashboard');
                 $message = 'Vendor login successful! Redirecting...';
             } else {
-                // They are a vendor but didn't check the box. Log them out and send an error.
+                // Vendor forgot to check the box -> Log them out
                 Auth::guard('web')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return response()->json([
-                    'message' => 'To log in as a vendor, please check the "Log in as Vendor" box.'
-                ], 422);
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'message' => 'To log in as a vendor, please check the "Log in as Vendor" box.',
+                        'errors' => ['login_as_vendor' => ['Please check the vendor box.']]
+                    ], 422);
+                }
+                return back()->withErrors(['email' => 'To log in as a vendor, please check the "Log in as Vendor" box.']);
             }
         }
 
-        // For AJAX requests (from our modals)
+        // 5. Return JSON response (for your Landing Page Modals)
         if ($request->wantsJson()) {
             return response()->json([
                 'message' => $message,
@@ -77,11 +70,10 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        // --- THIS IS THE IMPORTANT FIX ---
-        // Use redirect($redirectUrl) instead of redirect()->intended(...)
-        // so it doesn't accidentally send you to the default dashboard.
+        // 6. Fallback for normal form submits
         return redirect($redirectUrl);
     }
+
     /**
      * Destroy an authenticated session.
      */

@@ -1,7 +1,6 @@
-// --- Wait for the entire page to load before running any JS ---
 document.addEventListener('DOMContentLoaded', function() {
 
-    // --- Get the CSRF token from the meta tag ---
+    // --- CSRF Token Setup ---
     const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfTokenElement ? csrfTokenElement.getAttribute('content') : '';
 
@@ -162,7 +161,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.redirect_url) {
                 window.location.href = data.redirect_url;
             } else {
-                window.location.reload();
+                // For shop registration, we might just want to close the modal and stay
+                if (form.id === 'store-signup-form') {
+                     form.reset();
+                     const fileLabel = document.getElementById('file-label-text');
+                     if(fileLabel) fileLabel.innerText = 'DTI/Business Permit (PDF, JPG, PNG)';
+                     hideAllModals();
+                } else {
+                    window.location.reload();
+                }
             }
         } else {
             if (data.errors) {
@@ -187,14 +194,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const formData = new FormData(form);
+        // Manually add token to body as backup
         if (csrfToken) formData.append('_token', csrfToken); 
 
         try {
             // --- THIS IS THE FIX ---
-            // Use getAttribute('action') so we don't accidentally get the current page URL
-            // if the action attribute is missing.
+            // We check for the attribute explicitly. If it's missing (like in Create Shop),
+            // we use the data-action. This prevents using the default current page URL.
             const actionUrl = form.getAttribute('action') || form.dataset.action;
             
+            console.log('Submitting to:', actionUrl); // Debugging line to see where it goes
+
             const response = await fetch(actionUrl, {
                 method: 'POST',
                 body: formData,
