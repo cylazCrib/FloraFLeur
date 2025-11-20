@@ -36,19 +36,17 @@
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="products-table-body">
+             <tbody id="products-table-body">
                     @forelse($products as $product)
-                        <!-- 
-                           We store product data in data-attributes on the row 
-                           so our JavaScript can easily populate the 'Edit' modal 
-                        -->
                         <tr data-id="{{ $product->id }}" 
                             data-name="{{ $product->name }}"
                             data-description="{{ $product->description }}"
                             data-price="{{ $product->price }}"
                             data-image-url="{{ Storage::url($product->image) }}"
-                            data-update-url="{{ route('products.update', $product->id) }}"
-                            data-delete-url="{{ route('products.destroy', $product->id) }}">
+                            
+                            data-update-url="{{ route('vendor.products.update', $product->id) }}"
+                            
+                            data-delete-url="{{ route('vendor.products.destroy', $product->id) }}">
                             
                             <td>
                                 <img src="{{ Storage::url($product->image) }}" 

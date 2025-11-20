@@ -34,12 +34,15 @@
                     </li>
                     
                     <li>
-                        <a href="#" class="nav-item">
-                            <i class="fa-solid fa-truck-fast"></i> Orders & Deliveries
-                        </a>
+                        <a href="{{ route('vendor.orders.index') }}" 
+                           class="nav-item {{ request()->routeIs('vendor.orders.*') ? 'active' : '' }}">
+                        <i class="fa-solid fa-truck-fast"></i> Orders & Deliveries
+                    </a>
                     </li>
+                    
                     <li>
-                        <a href="#" class="nav-item">
+                        <a href="{{ route('vendor.inventory.index') }}" 
+                           class="nav-item {{ request()->routeIs('vendor.inventory.*') ? 'active' : '' }}">
                             <i class="fa-solid fa-box-archive"></i> Inventory
                         </a>
                     </li>
@@ -51,12 +54,13 @@
                         </a>
                     </li>
 
-                    <li>
-                        <a href="#" class="nav-item">
-                            <i class="fa-solid fa-user-group"></i> Owners & Notifs
-                        </a>
-                    </li>
-                </ul>
+                   <li>
+    <a href="{{ route('vendor.staff.index') }}" 
+       class="nav-item {{ request()->routeIs('vendor.staff.*') ? 'active' : '' }}">
+        <i class="fa-solid fa-user-group"></i> Manage Staff
+    </a>
+</li>      
+ </ul>
             </nav>
             <div class="sidebar-bottom">
                 <p>Integration</p>
