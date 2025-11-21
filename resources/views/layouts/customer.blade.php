@@ -5,84 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FLORA FLEUR</title>
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Rosarivo&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Rosarivo (Serif) for Headings/Logo, Lato/Inter (Sans) for body -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Rosarivo:ital@0;1&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
+    <!-- Tailwind Configuration -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'olive-dark': '#4a4a3a',
-                        'green-card': 'rgba(40, 90, 70, 0.85)',
-                        'input-bg': 'rgba(255, 255, 255, 0.2)',
-                        'dashboard-bg': '#f3f4f6',
-                        'dashboard-btn': '#86a873',
-                        'page-bg-trans': 'rgba(255, 255, 255, 0.15)',
-                        'page-border-trans': 'rgba(255, 255, 255, 0.2)',
-                        'account-card-bg': 'rgba(255, 255, 255, 0.25)',
+                        'olive-dark': '#4A4A3A',
+                        'dashboard-btn': '#86A873',
                     },
                     fontFamily: {
-                        'sans': ['Inter', 'sans-serif'],
+                        'sans': ['Lato', 'Inter', 'sans-serif'],
                         'rosarivo': ['Rosarivo', 'serif'],
-                        'lato': ['Lato', 'sans-serif']
+                        'lato': ['Lato', 'sans-serif'],
+                        'inter': ['Inter', 'sans-serif']
                     }
                 }
             }
         }
     </script>
     
+    <!-- Custom CSS/JS -->
     @vite(['resources/css/customer.css', 'resources/js/customer.js'])
 
 </head>
-<body class="bg-gray-900 text-white">
+<body class="bg-gray-900 text-white antialiased">
 
     @yield('content')
 
-    <div id="product-modal" class="app-container fixed inset-0 z-40 items-center justify-center p-4" style="background-color: rgba(0, 0, 0, 0.5);">
-        <div class="relative w-full max-w-2xl bg-stone-200/95 rounded-2xl shadow-2xl flex flex-col md:flex-row gap-6 p-8" style="backdrop-filter: blur(10px);">
+    <!-- --- MODALS (Keep existing modal structure for functionality) --- -->
+
+    <!-- Product Modal -->
+    <div id="product-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4" style="background-color: rgba(0, 0, 0, 0.6); display: none;">
+        <div class="relative w-full max-w-4xl bg-[#F5F5F0] rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden animate-fade-in">
             
-            <button data-modal-close class="absolute top-4 left-6 flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-black transition-colors z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <button data-modal-close class="absolute top-4 left-4 flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors z-10 uppercase tracking-wide">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
                 </svg>
                 BACK TO MENU
             </button>
 
-            <div class="w-full md:w-1/2 flex-shrink-0 pt-12 md:pt-0">
-                <img id="modal-product-image" src="https://i.pinimg.com/736x/93/70/e3/9370e3f359041ff4e3ae470e15e8a4cd.jpg" alt="Product Image" class="w-full h-auto object-cover rounded-xl shadow-lg">
+            <div class="w-full md:w-1/2 h-64 md:h-auto relative">
+                <img id="modal-product-image" src="" alt="Product" class="absolute inset-0 w-full h-full object-cover">
             </div>
 
-            <div class="w-full md:w-1/2 flex flex-col text-gray-900 pt-12 md:pt-0">
-                <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-2">Flower Description</h2>
-                <h3 id="modal-product-title" class="font-rosarivo text-3xl font-medium mb-4">Classic White Bouquet</h3>
-                <p id="modal-product-description" class="text-sm text-gray-700 mb-6 flex-grow">
-                    An elegant arrangement of pure white roses and lilies, perfect for any occasion.
+            <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center text-gray-800">
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Flower Description</h2>
+                <h3 id="modal-product-title" class="font-rosarivo text-3xl md:text-4xl mb-4 text-[#4A4A3A]">Product Name</h3>
+                <p id="modal-product-description" class="text-sm text-gray-600 leading-relaxed mb-8">
+                    Description goes here.
                 </p>
                 
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center justify-between mb-8 border-t border-gray-200 pt-6">
                     <div>
-                        <span class="text-sm text-gray-600">PRICE</span>
-                        <span id="modal-product-price" class="font-bold text-3xl ml-2">₱550</span>
+                        <span class="text-xs text-gray-400 font-bold tracking-wider block mb-1">PRICE</span>
+                        <span id="modal-product-price" class="font-rosarivo text-2xl text-[#4A4A3A]">₱0</span>
                     </div>
                     
-                    <div class="flex items-center justify-center gap-3">
-                        <button class="quantity-btn quantity-btn-minus !bg-gray-300/50 !text-gray-800 !border-gray-400/50 hover:!bg-gray-300/80">-</button>
-                        <span id="modal-quantity-value" class="quantity-value font-bold text-xl w-8 text-center text-gray-900">1</span>
-                        <button class="quantity-btn quantity-btn-plus !bg-gray-300/50 !text-gray-800 !border-gray-400/50 hover:!bg-gray-300/80">+</button>
+                    <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-full border border-gray-200">
+                        <button class="quantity-btn quantity-btn-minus text-gray-500 hover:text-[#4A4A3A] font-bold text-lg">-</button>
+                        <span id="modal-quantity-value" class="font-lato font-bold text-lg w-6 text-center text-gray-800">1</span>
+                        <button class="quantity-btn quantity-btn-plus text-gray-500 hover:text-[#4A4A3A] font-bold text-lg">+</button>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4">
-                    <button class="flex-1 bg-gray-500 text-white text-sm font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-gray-600 transition-all duration-300">
+                <div class="flex gap-3">
+                    <button class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold py-3.5 rounded-lg transition-colors tracking-wide uppercase">
                         Add to Cart
                     </button>
-                    <button class="flex-1 bg-dashboard-btn text-white text-sm font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-opacity-90 transition-all duration-300 btn-checkout">
+                    <button class="flex-1 bg-[#86A873] hover:bg-[#759465] text-white text-sm font-bold py-3.5 rounded-lg shadow-lg transition-colors tracking-wide uppercase btn-checkout">
                         Check Out
                     </button>
                 </div>
@@ -90,67 +91,68 @@
         </div>
     </div>
 
-    <div id="payment-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4" style="background-color: rgba(0, 0, 0, 0.5);">
-        <div class="relative w-full max-w-xl bg-stone-200/95 rounded-2xl shadow-2xl flex flex-col gap-6 p-8" style="backdrop-filter: blur(10px);">
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4" style="background-color: rgba(0, 0, 0, 0.6); display: none;">
+        <div class="relative w-full max-w-lg bg-white rounded-xl shadow-2xl p-8 text-gray-800 animate-fade-in">
             
-            <button data-modal-close class="absolute top-4 right-6 text-gray-700 hover:text-black transition-colors z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            <button data-modal-close class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
 
-            <div class="w-full flex flex-col text-gray-900">
-                <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-2">Delivery Confirmation</h2>
-                <h3 class="font-rosarivo text-3xl font-medium mb-6">Confirm Your Order</h3>
-                
-                <div class="mb-6">
-                    <span class="text-sm text-gray-600">TOTAL</span>
-                    <span id="payment-total-price" class="font-bold text-3xl ml-2">₱0</span>
-                </div>
-
-                <div class="space-y-4">
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Payment Method</h4>
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <button class="payment-btn flex-1 bg-gray-300/50 border border-gray-400/50 text-gray-800 text-sm font-bold py-3 px-4 rounded-lg hover:bg-gray-300/80 transition-all duration-300">
-                            Cash On Delivery
-                        </button>
-                        <button class="payment-btn flex-1 bg-gray-300/50 border border-gray-400/50 text-gray-800 text-sm font-bold py-3 px-4 rounded-lg hover:bg-gray-300/80 transition-all duration-300">
-                            E-Wallet
-                        </button>
-                        <button class="payment-btn flex-1 bg-gray-300/50 border border-gray-400/50 text-gray-800 text-sm font-bold py-3 px-4 rounded-lg hover:bg-gray-300/80 transition-all duration-300">
-                            Others
-                        </button>
-                    </div>
-                </div>
-                
-                <button class="btn-place-order w-full mt-8 bg-dashboard-btn text-white text-base font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-opacity-90 transition-all duration-300">
-                    PLACE ORDER
-                </button>
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Delivery Confirmation</h2>
+            <h3 class="font-rosarivo text-3xl text-[#4A4A3A] mb-6">Confirm Order</h3>
+            
+            <div class="bg-gray-50 p-4 rounded-lg mb-6 flex justify-between items-center border border-gray-100">
+                <span class="text-sm font-bold text-gray-500 tracking-wider">TOTAL AMOUNT</span>
+                <span id="payment-total-price" class="font-rosarivo text-2xl text-[#4A4A3A]">₱0</span>
             </div>
-        </div>
-    </div>
 
-    <div id="thank-you-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4" style="background-color: rgba(0, 0, 0, 0.5);">
-
-    <div class="relative w-full max-w-lg bg-stone-200/95 rounded-2xl shadow-2xl flex flex-col items-center gap-6 p-8" style="backdrop-filter: blur(10px);">
-
-        <button data-modal-close class="absolute top-4 right-6 text-gray-700 hover:text-black transition-colors z-10">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
-
-        <div class="w-full flex flex-col text-gray-900 text-center">
-            <h2 class="font-rosarivo text-4xl font-medium mb-4">Thank you for your Order!</h2>
-            <p class="text-gray-700 mb-8">
-                You just made our business grow<br>and for that we are GRATEFUL!
-            </p>
-            <button class="btn-back-main w-full max-w-xs mx-auto bg-dashboard-btn text-white text-base font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-opacity-90 transition-all duration-300">
-                Back to Main Menu
+            <div class="mb-8">
+                <h4 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">Payment Method</h4>
+                <div class="grid grid-cols-3 gap-3">
+                    <button class="payment-btn py-3 px-2 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:border-[#86A873] hover:text-[#86A873] transition-all">
+                        Cash On Delivery
+                    </button>
+                    <button class="payment-btn py-3 px-2 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:border-[#86A873] hover:text-[#86A873] transition-all">
+                        E-Wallet
+                    </button>
+                    <button class="payment-btn py-3 px-2 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:border-[#86A873] hover:text-[#86A873] transition-all">
+                        Credit Card
+                    </button>
+                </div>
+            </div>
+            
+            <button class="btn-place-order w-full bg-[#86A873] hover:bg-[#759465] text-white text-sm font-bold py-4 rounded-lg shadow-lg transition-all tracking-widest uppercase">
+                Place Order
             </button>
         </div>
     </div>
-</div>
 
-    <div id="order-toast" class="fixed top-6 right-6 bg-green-600 text-white py-3 px-5 rounded-lg shadow-lg transform translate-x-[120%] transition-transform duration-300 ease-in-out z-50">
-        <span class="font-semibold">Order Placed!</span>
-        <p class="text-sm">Your order has been confirmed.</p>
+    <!-- Thank You Modal -->
+    <div id="thank-you-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4" style="background-color: rgba(0, 0, 0, 0.6); display: none;">
+        <div class="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-10 text-center animate-fade-in">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+            </div>
+            
+            <h2 class="font-rosarivo text-3xl text-[#4A4A3A] mb-3">Thank You!</h2>
+            <p class="text-gray-500 text-sm leading-relaxed mb-8">
+                Your order has been placed successfully.<br>We are preparing your flowers with love.
+            </p>
+            
+            <button class="btn-back-main w-full bg-[#4A4A3A] hover:bg-[#3a3a2e] text-white text-sm font-bold py-3 rounded-lg transition-colors tracking-wide uppercase">
+                Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="order-toast" class="fixed top-6 right-6 bg-[#4A4A3A] text-white py-3 px-6 rounded-lg shadow-xl transform translate-x-[120%] transition-transform duration-300 ease-in-out z-[60] flex items-center gap-3">
+        <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+        <div>
+            <span class="font-bold text-sm block">Success</span>
+            <p class="text-xs text-gray-300">Operation completed successfully.</p>
+        </div>
     </div>
 
 </body>
