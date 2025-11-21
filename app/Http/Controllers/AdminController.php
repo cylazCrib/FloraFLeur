@@ -50,11 +50,17 @@ class AdminController extends Controller
      */
     public function approveShop(Shop $shop)
     {
-        // ... (your existing approveShop method) ...
+        // 1. Update the shop's status
         $shop->update(['status' => 'approved']);
-        return redirect()->route('admin.registrations.index')->with('success', 'Shop has been approved!');
-    }
 
+        // 2. CRITICAL FIX: Update the User's role to 'vendor'
+        // This gives them permission to log in to the Vendor Dashboard
+        $shop->user->update(['role' => 'vendor']);
+
+        // 3. Redirect back with success message
+        return redirect()->route('admin.registrations.index')
+            ->with('success', 'Shop approved! The user can now log in as a Vendor.');
+    }
     /**
      * DELETE: Reject (and delete) a shop.
      */
