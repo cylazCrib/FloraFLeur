@@ -60,7 +60,6 @@
                                 <select class="status-dropdown status-{{ Str::slug($order->status) }}" 
                                         data-url="{{ route('vendor.orders.updateStatus', $order->id) }}"
                                         onchange="updateOrderStatus(this)">
-                                    
                                     <option value="Pending" {{ $order->status == 'Pending' ? 'selected' : '' }}>Pending</option>
                                     <option value="Being Made" {{ $order->status == 'Being Made' ? 'selected' : '' }}>Being Made</option>
                                     <option value="Delivered" {{ $order->status == 'Delivered' ? 'selected' : '' }}>Delivered</option>
@@ -79,6 +78,145 @@
                         <tr>
                             <td colspan="6" class="text-center" style="padding: 2rem;">No orders found.</td>
                         </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="content-container" style="margin-top: 2rem;">
+        <div class="content-header">
+            <h2>Delivery Management</h2>
+        </div>
+        
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Delivery Address</th>
+                        <th>Driver</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($orders as $order)
+                        @if($order->status != 'Delivered' && $order->status != 'Canceled')
+                        <tr>
+                            <td>#{{ $order->order_number }}</td>
+                            <td>{{ $order->customer_name }}</td>
+                            <td>{{ Str::limit($order->delivery_address, 30) }}</td>
+                            
+                            <td>
+                                <select class="driver-select" id="driver-select-{{ $order->id }}" style="padding: 0.4rem; border-radius: 5px; border: 1px solid #ddd; width: 100%;">
+                                    <option value="">-- Select Driver --</option>
+                                    @foreach($drivers as $driver)
+                                        <option value="{{ $driver->name }}" {{ $order->driver_name == $driver->name ? 'selected' : '' }}>
+                                            {{ $driver->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            
+                            <td>
+                                <button class="table-action-btn assign-driver-btn"
+                                        data-url="{{ route('vendor.orders.assign', $order->id) }}"
+                                        data-select-id="driver-select-{{ $order->id }}"
+                                        style="margin-right: 5px;">
+                                    Assign
+                                </button>
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($order->delivery_address) }}" 
+                                   target="_blank" 
+                                   class="table-action-btn view-link">
+                                   Map
+                                </a>
+                            </td>
+                        </tr>
+                        @endif
+                    @empty
+                        <tr><td colspan="5" class="text-center">No active orders for delivery.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <section class="content-container" style="margin-top: 2rem;">
+        <div class="content-header">
+            <h2>Customer Updates & Notifications</h2>
+        </div>
+        
+        <form class="form-grid" id="notification-form" data-url="{{ route('vendor.orders.notify') }}">
+            <div class="form-group">
+                <label for="select-order">Select Order</label>
+                <select name="order_id" id="select-order" required>
+                    <option value="">-- Choose an order --</option>
+                    @foreach($orders as $order)
+                        <option value="{{ $order->id }}">
+                            #{{ $order->order_number }} - {{ $order->customer_name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="notif-type">Notification Type</label>
+                <input type="text" name="type" id="notif-type" value="Order Status Update" required>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Send to:</label>
+                <div style="display: flex; gap: 1.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" checked> <i class="fa-regular fa-envelope"></i> Email
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" checked> <i class="fa-solid fa-comment-sms"></i> SMS
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="message">Message</label>
+                <textarea name="message" id="message" rows="3" required>Your order is being prepared. Thank you!</textarea>
+            </div>
+
+            <div class="form-group full-width">
+                <button type="submit" class="action-button" id="send-notif-btn">Send Notification</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="content-container" style="margin-top: 2rem;">
+        <div class="content-header">
+            <h2>Recent Notifications Sent</h2>
+        </div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Customer</th>
+                        <th>Order ID</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($notifications as $notif)
+                        <tr>
+                            <td>{{ $notif->created_at->format('M d, g:i A') }}</td>
+                            <td>{{ $notif->order->customer_name }}</td>
+                            <td>#{{ $notif->order->order_number }}</td>
+                            <td>{{ $notif->type }}</td>
+                            <td>
+                                <span class="status" style="color: #27AE60; font-weight: 600;">
+                                    <i class="fa-solid fa-check"></i> {{ $notif->status }}
+                                </span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="text-center">No notifications sent yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -41,6 +41,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/owners/notify', [AdminController::class, 'notifyOwners'])->name('owners.notify');
     Route::get('/gmail', [AdminController::class, 'gmail'])->name('gmail.index');
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings.index');
+    Route::post('/settings/password', [AdminController::class, 'updatePassword'])->name('settings.password');
 });
 
 
@@ -67,13 +68,24 @@ Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function (
     Route::patch('/orders/{order}/status', [App\Http\Controllers\VendorOrderController::class, 'updateStatus'])->name('orders.updateStatus');
     Route::get('/orders/{order}', [VendorOrderController::class, 'show'])->name('orders.show');
 
-    // ... existing routes ...
-    
+   
     // STAFF ROUTES
     Route::get('/staff', [App\Http\Controllers\VendorStaffController::class, 'index'])->name('staff.index');
     Route::post('/staff', [App\Http\Controllers\VendorStaffController::class, 'store'])->name('staff.store');
     Route::post('/staff/{staff}/update', [App\Http\Controllers\VendorStaffController::class, 'update'])->name('staff.update');
     Route::patch('/staff/{staff}/toggle', [App\Http\Controllers\VendorStaffController::class, 'toggleStatus'])->name('staff.toggle');
+    // GMAIL & SETTINGS
+    Route::get('/gmail', [VendorController::class, 'gmail'])->name('gmail.index');
+    Route::post('/gmail', [VendorController::class, 'connectGmail'])->name('gmail.connect');
+    
+    Route::get('/settings', [VendorController::class, 'settings'])->name('settings.index');
+    Route::post('/settings/announcement', [VendorController::class, 'postAnnouncement'])->name('settings.announcement');
+    Route::post('/settings/report', [VendorController::class, 'generateReport'])->name('settings.report');
+    Route::post('/settings/password', [VendorController::class, 'updatePassword'])->name('settings.password');
+
+    Route::patch('/orders/{order}/assign', [VendorOrderController::class, 'assignDriver'])->name('orders.assign');
+    Route::post('/orders/notify', [VendorOrderController::class, 'sendNotification'])->name('orders.notify');
+
 });
 
 

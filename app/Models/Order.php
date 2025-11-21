@@ -28,4 +28,9 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    public function notifications()
+{
+    return $this->hasMany(OrderNotification::class);
+}
 }

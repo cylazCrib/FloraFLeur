@@ -139,11 +139,11 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = '/forgot-password';
     });
 
-    // --- Helper function to handle responses (Redirect vs JSON) ---
+    // --- HELPER: Handle Fetch Responses ---
     async function handleResponse(response, form, errorDiv) {
         const contentType = response.headers.get("content-type");
         
-        // If the server sends back HTML (a redirect), follow it
+        // If the server sends a Redirect (HTML), follow it
         if (contentType && contentType.indexOf("text/html") !== -1) {
             if (response.redirected) {
                  window.location.href = response.url;
@@ -158,10 +158,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (response.ok) {
             showToast(data.message || 'Success! Redirecting...');
+            
             if (data.redirect_url) {
+                // Redirect to the dashboard URL provided by Laravel
                 window.location.href = data.redirect_url;
             } else {
-                // For shop registration, we might just want to close the modal and stay
+                // If no redirect (e.g., Store Signup), close modal
                 if (form.id === 'store-signup-form') {
                      form.reset();
                      const fileLabel = document.getElementById('file-label-text');
@@ -172,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         } else {
+            // Handle Validation Errors
             if (data.errors) {
                  let errorMessages = '';
                  const errors = Array.isArray(data.errors) ? data.errors : Object.values(data.errors).flat();
@@ -184,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Generic Form Handler ---
+    // --- GENERIC FORM SUBMISSION ---
     async function submitFormWithToken(e, form, errorDivId) {
         e.preventDefault();
         const errorDiv = document.getElementById(errorDivId);
@@ -194,17 +197,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const formData = new FormData(form);
-        // Manually add token to body as backup
-        if (csrfToken) formData.append('_token', csrfToken); 
+        
+        // Manually append CSRF token if it's missing from form
+        if (csrfToken && !formData.has('_token')) {
+            formData.append('_token', csrfToken); 
+        }
 
         try {
-            // --- THIS IS THE FIX ---
-            // We check for the attribute explicitly. If it's missing (like in Create Shop),
-            // we use the data-action. This prevents using the default current page URL.
+            // Use the form's 'action' attribute (e.g., /login)
+            // Fallback to 'data-action' if action is missing
             const actionUrl = form.getAttribute('action') || form.dataset.action;
             
-            console.log('Submitting to:', actionUrl); // Debugging line to see where it goes
-
             const response = await fetch(actionUrl, {
                 method: 'POST',
                 body: formData,
@@ -223,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Attach Event Listeners to Forms ---
+    // --- Attach Listeners ---
     if (signinForm) {
         signinForm.addEventListener('submit', (e) => submitFormWithToken(e, signinForm, 'signin-errors'));
     }

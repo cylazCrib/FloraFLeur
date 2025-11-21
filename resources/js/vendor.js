@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalContainer = document.getElementById('modal-container');
     const toast = document.getElementById('toast');
     
-    // --- Toast Function ---
+    // --- Helper Functions ---
     function showToast(message) {
         if (toast) {
             toast.textContent = message;
@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Helper: Show/Hide Modal ---
     function toggleModal(modal, show = true) {
         if(modal) modal.style.display = show ? 'flex' : 'none';
     }
@@ -31,18 +30,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const itemModal = document.getElementById('item-form-modal');
     const staffModal = document.getElementById('staff-form-modal');
     const orderDetailsModal = document.getElementById('order-details-modal');
-    const orderFormModal = document.getElementById('order-form-modal'); // Manual Order Modal
+    const orderFormModal = document.getElementById('order-form-modal'); 
 
     // Forms
     const productForm = document.getElementById('product-form');
     const itemForm = document.getElementById('item-form');
     const staffForm = document.getElementById('staff-form');
-    const orderForm = document.getElementById('order-form'); // Manual Order Form
+    const orderForm = document.getElementById('order-form'); 
+    const passwordForm = document.getElementById('password-form');
+    const gmailForm = document.getElementById('gmail-form');
+    const reportForm = document.getElementById('report-form');
+    const announcementForm = document.getElementById('announcement-form');
 
     document.body.addEventListener('click', function(e) {
         const target = e.target;
 
-        // --- 1. PRODUCTS ---
+        // --- 1. PRODUCTS MANAGEMENT ---
+        // Add
         if (target.id === 'new-product-btn') {
             e.preventDefault();
             if(productForm) {
@@ -57,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             toggleModal(productModal, true);
         }
-
+        // Edit
         if (target.closest('.edit-product-btn')) {
             const row = target.closest('tr');
             const data = row.dataset;
@@ -73,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
             productForm.dataset.url = data.updateUrl;
             toggleModal(productModal, true);
         }
-
+        // Delete
         if (target.closest('.remove-product-btn')) {
             if (!confirm('Delete this product?')) return;
             const row = target.closest('tr');
@@ -83,7 +87,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }).then(res => res.json()).then(data => { showToast(data.message); row.remove(); });
         }
 
-        // --- 2. INVENTORY ---
+
+        // --- 2. INVENTORY MANAGEMENT ---
+        // Add
         if (target.id === 'add-item-btn' || target.id === 'add-flower-btn') {
             e.preventDefault();
             if(itemForm) {
@@ -96,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             toggleModal(itemModal, true);
         }
-        
+        // Edit
         if (target.closest('.update-item-btn')) {
             const item = target.closest('.inventory-item');
             const data = item.dataset;
@@ -109,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             itemForm.dataset.url = data.updateUrl;
             toggleModal(itemModal, true);
         }
-        
+        // Delete
         if (target.closest('.remove-btn')) {
             if (!confirm('Remove this item?')) return;
             const item = target.closest('.inventory-item');
@@ -119,7 +125,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }).then(res => res.json()).then(data => { showToast('Item deleted'); item.remove(); });
         }
 
+
         // --- 3. STAFF MANAGEMENT ---
+        // Add
         if (target.id === 'add-staff-btn') {
             e.preventDefault();
             if(staffForm) {
@@ -130,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             toggleModal(staffModal, true);
         }
-
+        // Edit
         if (target.closest('.edit-staff-btn')) {
             const row = target.closest('tr');
             const data = row.dataset;
@@ -143,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             staffForm.dataset.url = data.updateUrl;
             toggleModal(staffModal, true);
         }
-
+        // Toggle Status
         if (target.closest('.toggle-status-btn')) {
             const btn = target.closest('.toggle-status-btn');
             fetch(btn.dataset.url, {
@@ -152,8 +160,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }).then(res => res.json()).then(data => { showToast(data.message); window.location.reload(); });
         }
 
+
         // --- 4. ORDER MANAGEMENT ---
-        
         // A. View Details
         if (target.closest('.view-order-btn')) {
             e.preventDefault();
@@ -163,18 +171,20 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(url, { headers: { 'Accept': 'application/json' } })
             .then(response => response.json())
             .then(order => {
+                // Header
                 document.getElementById('modal-order-number').textContent = '#' + order.order_number;
                 document.getElementById('modal-order-date').textContent = new Date(order.created_at).toLocaleDateString();
-                
                 const statusSpan = document.getElementById('modal-order-status');
                 statusSpan.textContent = order.status;
                 statusSpan.className = 'status status-' + order.status.toLowerCase().replace(' ', '-');
 
+                // Customer
                 document.getElementById('modal-customer-name').textContent = order.customer_name;
                 document.getElementById('modal-customer-email').textContent = order.customer_email || 'N/A';
                 document.getElementById('modal-customer-phone').textContent = order.customer_phone;
                 document.getElementById('modal-delivery-address').textContent = order.delivery_address;
 
+                // Items
                 const tbody = document.getElementById('modal-items-list');
                 tbody.innerHTML = '';
                 order.items.forEach(item => {
@@ -204,6 +214,39 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleModal(orderFormModal, true);
         }
 
+        // C. Assign Driver
+        if (target.classList.contains('assign-driver-btn')) {
+            e.preventDefault();
+            const btn = target;
+            const url = btn.dataset.url;
+            const selectId = btn.dataset.selectId;
+            const driverName = document.getElementById(selectId).value;
+
+            if (!driverName) {
+                alert("Please select a driver first.");
+                return;
+            }
+
+            fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ driver_name: driverName })
+            })
+            .then(res => res.json())
+            .then(data => {
+                showToast(data.message);
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error assigning driver.');
+            });
+        }
+
+
         // --- GLOBAL: CLOSE MODALS ---
         if (target.matches('[data-close-modal]') || target.classList.contains('modal-overlay')) {
             const modal = target.closest('.modal-overlay') || target;
@@ -211,12 +254,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- GENERIC FORM HANDLER ---
+    // ============================================================
+    //  FORM SUBMISSION HANDLER (Generic)
+    // ============================================================
     async function handleFormSubmit(e, form, modal) {
         e.preventDefault();
         const formData = new FormData(form);
         const url = form.dataset.url;
         
+        // Optional: Disable button text
+        const btn = form.querySelector('button[type="submit"]');
+        const originalText = btn ? btn.innerText : '';
+        if(btn) { btn.disabled = true; btn.innerText = 'Saving...'; }
+
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -226,23 +276,36 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             if (response.ok) {
                 showToast(result.message);
-                toggleModal(modal, false);
+                if(modal) toggleModal(modal, false);
+                // Reload to see changes. For a smoother experience you could append to table via JS.
                 window.location.reload();
             } else {
                 let msg = result.message || 'Error.';
                 if(result.errors) msg = Object.values(result.errors).flat().join('\n');
                 alert('Error:\n' + msg);
             }
-        } catch(error) { console.error(error); alert('Network Error'); }
+        } catch(error) { 
+            console.error(error); 
+            alert('Network Error'); 
+        } finally {
+            if(btn) { btn.disabled = false; btn.innerText = originalText; }
+        }
     }
 
-    // Attach handlers to all forms if they exist
+    // Attach handlers to forms if they exist on the current page
     if (productForm) productForm.addEventListener('submit', (e) => handleFormSubmit(e, productForm, productModal));
     if (itemForm) itemForm.addEventListener('submit', (e) => handleFormSubmit(e, itemForm, itemModal));
     if (staffForm) staffForm.addEventListener('submit', (e) => handleFormSubmit(e, staffForm, staffModal));
     if (orderForm) orderForm.addEventListener('submit', (e) => handleFormSubmit(e, orderForm, orderFormModal));
+    if (passwordForm) passwordForm.addEventListener('submit', (e) => handleFormSubmit(e, passwordForm, null));
+    if (gmailForm) gmailForm.addEventListener('submit', (e) => handleFormSubmit(e, gmailForm, null));
+    if (reportForm) reportForm.addEventListener('submit', (e) => handleFormSubmit(e, reportForm, null));
+    if (announcementForm) announcementForm.addEventListener('submit', (e) => handleFormSubmit(e, announcementForm, null));
 
-    // --- IMAGE PREVIEW ---
+
+    // ============================================================
+    //  IMAGE PREVIEW
+    // ============================================================
     const imageInput = document.getElementById('p_image');
     if (imageInput) {
         imageInput.addEventListener('change', function(e) {
@@ -259,12 +322,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // --- LOGOUT ---
+    // ============================================================
+    //  LOGOUT LOGIC
+    // ============================================================
     const logoutBtn = document.getElementById('logout-btn');
     const profileLogoutBtn = document.getElementById('profile-logout-btn');
+    const confirmModal = document.getElementById('confirm-modal');
 
     const handleLogout = function() {
-        if(confirm("Are you sure you want to log out?")) {
+        const confirmText = document.getElementById('confirm-modal-text');
+        const confirmBtn = document.getElementById('confirm-modal-btn');
+        
+        if(confirmText) confirmText.textContent = "Are you sure you want to log out?";
+        
+        toggleModal(confirmModal, true);
+        
+        confirmBtn.onclick = function() {
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '/logout';
@@ -273,13 +346,15 @@ document.addEventListener('DOMContentLoaded', function() {
             form.appendChild(tokenInput);
             document.body.appendChild(form);
             form.submit();
-        }
+        };
     };
 
     if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
     if (profileLogoutBtn) profileLogoutBtn.addEventListener('click', handleLogout);
     
-    // --- ORDER STATUS DROPDOWN ---
+    // ============================================================
+    //  ORDER STATUS DROPDOWN
+    // ============================================================
     window.updateOrderStatus = async function(selectElement) {
         const newStatus = selectElement.value;
         const url = selectElement.dataset.url;

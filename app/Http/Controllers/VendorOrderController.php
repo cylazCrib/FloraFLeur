@@ -18,15 +18,23 @@ class VendorOrderController extends Controller
         $shop = Auth::user()->shop;
         if (!$shop) return redirect()->route('vendor.dashboard');
 
-        // Get orders with items/customer
+        // 1. Get orders
         $orders = $shop->orders()->with(['items', 'customer'])->latest()->get();
         
-        // NEW: Get products for the "Add Order" dropdown
+        // 2. Get products (for Add Order)
         $products = $shop->products()->get();
+        
+        // 3. Get drivers (for Assign Driver)
+        $drivers = $shop->staff()->where('role', 'Driver')->where('status', 'Active')->get();
 
-        return view('vendor.orders', compact('orders', 'products'));
+        // 4. NEW: Get Notification History for this shop's orders
+        // We find notifications where the related order belongs to this shop
+        $notifications = \App\Models\OrderNotification::whereHas('order', function($q) use ($shop) {
+            $q->where('shop_id', $shop->id);
+        })->with('order')->latest()->get();
+
+        return view('vendor.orders', compact('orders', 'products', 'drivers', 'notifications'));
     }
-
     /**
      * CREATE: Manually create a new order.
      */
@@ -44,20 +52,20 @@ class VendorOrderController extends Controller
         $shop = Auth::user()->shop;
         $product = Product::find($request->product_id);
 
-        // 1. Create the Order
+        // Create the Order
         $order = $shop->orders()->create([
             'user_id' => Auth::id(), // Linked to the vendor for manual orders
             'order_number' => 'FF-' . rand(10000, 99999),
             'customer_name' => $request->customer_name,
             'customer_phone' => $request->customer_phone,
-            'customer_email' => null, // Optional for manual orders
+            'customer_email' => null,
             'delivery_address' => $request->delivery_address,
             'delivery_date' => $request->delivery_date,
             'total_amount' => $product->price * $request->quantity,
             'status' => 'Pending'
         ]);
 
-        // 2. Create the Order Item
+        // Create the Order Item
         OrderItem::create([
             'order_id' => $order->id,
             'product_id' => $product->id,
@@ -97,5 +105,50 @@ class VendorOrderController extends Controller
         }
         $order->load('items');
         return response()->json($order);
+    }
+
+    /**
+     * UPDATE: Assign a driver to an order.
+     */
+    public function assignDriver(Request $request, Order $order)
+    {
+        if ($order->shop_id !== Auth::user()->shop->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'driver_name' => 'required|string',
+        ]);
+
+        $order->update(['driver_name' => $request->driver_name]);
+
+        return response()->json(['message' => 'Driver assigned successfully!']);
+    }
+
+    /**
+     * CREATE: Send a notification for an order.
+     */
+    public function sendNotification(Request $request)
+    {
+        $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'type'     => 'required|string',
+            'message'  => 'required|string',
+        ]);
+
+        // Verify ownership
+        $order = Order::find($request->order_id);
+        if ($order->shop_id !== Auth::user()->shop->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Save to database
+        $order->notifications()->create([
+            'type' => $request->type,
+            'message' => $request->message,
+            'status' => 'Sent'
+        ]);
+
+        return response()->json(['message' => 'Notification sent successfully!']);
     }
 }
