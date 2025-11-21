@@ -4,7 +4,7 @@
 
 <div id="app-container-dashboard" class="app-container relative min-h-screen w-full flex-col font-sans bg-[#F5F5F0]">
     
-    <!-- Background Image (Only visible on Dashboard Home) -->
+    <!-- Background Image (Persistent across all views) -->
     <div id="bg-image-container" class="absolute inset-0 w-full h-full z-0 transition-opacity duration-500">
         <img src="{{ asset('images/image_7f3485.jpg') }}" 
              alt="Background" 
@@ -66,6 +66,7 @@
                     <!-- Single Links -->
                     <a href="#" onclick="app.nav.showAccount(event)" class="h-20 flex items-center font-lato text-[15px] font-medium tracking-wide text-white hover:text-gray-300 transition-colors uppercase cursor-pointer select-none">ACCOUNT</a>
                     <a href="#" onclick="app.nav.showAbout(event)" class="h-20 flex items-center font-lato text-[15px] font-medium tracking-wide text-white hover:text-gray-300 transition-colors uppercase cursor-pointer select-none">ABOUT US</a>
+                    <a href="#" onclick="app.nav.showRequest(event)" class="h-20 flex items-center font-lato text-[15px] font-medium tracking-wide text-white hover:text-gray-300 transition-colors uppercase cursor-pointer select-none">REQUEST ARRANGEMENT</a>
                     
                     <!-- My Purchases Dropdown -->
                     <div class="relative group h-20 flex items-center">
@@ -160,7 +161,7 @@
 
         <!-- 2. PRODUCTS LIST VIEW (Hidden by default) -->
         <div id="view-products" class="view-section hidden flex-grow w-full max-w-[1400px] mx-auto px-4 py-12 pt-28">
-             <h2 id="product-category-title" class="font-rosarivo text-4xl text-[#4A4A3A] mb-8 pl-4 border-l-4 border-[#86A873]">Collection</h2>
+             <h2 id="product-category-title" class="font-rosarivo text-4xl text-[#4A4A3A] mb-8 pl-4 border-l-4 border-[#86A873] bg-white/80 backdrop-blur-sm inline-block pr-6 py-2 rounded-r-lg">Collection</h2>
              <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                  <!-- Dynamic Content Loaded via JS -->
              </div>
@@ -168,7 +169,7 @@
 
         <!-- 3. CART VIEW -->
         <div id="view-cart" class="view-section hidden flex-grow w-full max-w-5xl mx-auto px-4 py-12 pt-28 text-gray-800">
-            <h2 class="font-rosarivo text-4xl text-[#4A4A3A] mb-8">Your Cart</h2>
+            <h2 class="font-rosarivo text-4xl text-[#4A4A3A] mb-8 bg-white/80 backdrop-blur-sm inline-block px-6 py-2 rounded-lg">Your Cart</h2>
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
@@ -200,21 +201,21 @@
 
         <!-- 4. FAVORITES VIEW -->
         <div id="view-favorites" class="view-section hidden flex-grow w-full max-w-6xl mx-auto px-4 py-12 pt-28">
-            <h2 class="font-rosarivo text-4xl text-[#4A4A3A] mb-8">My Favorites</h2>
+            <h2 class="font-rosarivo text-4xl text-[#4A4A3A] mb-8 bg-white/80 backdrop-blur-sm inline-block px-6 py-2 rounded-lg">My Favorites</h2>
             <div id="favorites-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Dynamic Favorites -->
             </div>
-             <div id="no-favorites-msg" class="hidden text-center py-20 text-gray-500 italic">
+             <div id="no-favorites-msg" class="hidden text-center py-20 text-gray-500 italic bg-white/80 backdrop-blur-sm rounded-lg">
                 You haven't saved any items yet.
             </div>
         </div>
 
         <!-- 5. PURCHASES VIEW -->
         <div id="view-purchases" class="view-section hidden flex-grow w-full max-w-5xl mx-auto px-4 py-12 pt-28 text-gray-800">
-            <h2 class="font-rosarivo text-4xl text-[#4A4A3A] mb-6">My Purchases</h2>
+            <h2 class="font-rosarivo text-4xl text-[#4A4A3A] mb-6 bg-white/80 backdrop-blur-sm inline-block px-6 py-2 rounded-lg">My Purchases</h2>
             
             <!-- Tabs -->
-            <div class="flex border-b border-gray-300 mb-8">
+            <div class="flex border-b border-gray-300 mb-8 bg-white/80 backdrop-blur-sm rounded-t-lg w-fit">
                 <button onclick="app.nav.switchPurchaseTab('to-ship')" class="purchase-tab active px-6 py-3 text-sm font-bold text-gray-500 hover:text-[#4A4A3A] border-b-2 border-transparent hover:border-[#86A873] transition-all cursor-pointer" data-tab="to-ship">To Ship</button>
                 <button onclick="app.nav.switchPurchaseTab('completed')" class="purchase-tab px-6 py-3 text-sm font-bold text-gray-500 hover:text-[#4A4A3A] border-b-2 border-transparent hover:border-[#86A873] transition-all cursor-pointer" data-tab="completed">Completed</button>
                 <button onclick="app.nav.switchPurchaseTab('refund')" class="purchase-tab px-6 py-3 text-sm font-bold text-gray-500 hover:text-[#4A4A3A] border-b-2 border-transparent hover:border-[#86A873] transition-all cursor-pointer" data-tab="refund">Return/Refund</button>
@@ -238,7 +239,7 @@
                         Our team of dedicated florists hand-picks every stem, ensuring that only the freshest and most vibrant blooms make it into your arrangements. 
                         Whether it's a grand wedding centerpiece, a heartfelt Valentine's bouquet, or a simple gesture of appreciation, we pour our heart into every petal.
                     </p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 mb-8">
                         <div class="text-center p-4 bg-gray-50 rounded-lg hover:shadow-md transition-shadow">
                             <div class="text-3xl mb-2">🌿</div>
                             <h3 class="font-bold mb-2">Freshly Sourced</h3>
@@ -255,48 +256,161 @@
                             <p class="text-sm">Hand-delivered with care.</p>
                         </div>
                     </div>
+                    
+                    <!-- Added Contacts Section -->
+                    <div class="border-t border-gray-200 pt-8 mt-8">
+                        <h3 class="font-rosarivo text-2xl mb-4 text-center">Contact Us</h3>
+                        <div class="flex flex-col md:flex-row justify-center items-center gap-8 text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="bg-[#86A873]/20 p-3 rounded-full mb-2 text-[#86A873]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                </div>
+                                <span class="font-bold text-sm">Call Us</span>
+                                <span class="text-gray-600">+63 912 345 6789</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="bg-[#86A873]/20 p-3 rounded-full mb-2 text-[#86A873]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <span class="font-bold text-sm">Email Us</span>
+                                <span class="text-gray-600">hello@florafleur.com</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="bg-[#86A873]/20 p-3 rounded-full mb-2 text-[#86A873]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <span class="font-bold text-sm">Visit Us</span>
+                                <span class="text-gray-600">123 Flower St., Garden City</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 7. ACCOUNT VIEW -->
-        <div id="view-account" class="view-section hidden flex-grow w-full max-w-2xl mx-auto px-4 py-12 pt-28 text-[#4A4A3A]">
-            <div class="bg-white p-10 rounded-xl shadow-xl text-center">
-                <!-- Display Mode -->
-                <div id="account-display">
-                    <div class="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl shadow-inner">👤</div>
-                    <h2 id="display-name" class="font-rosarivo text-3xl mb-2">{{ Auth::user()->name ?? 'Guest User' }}</h2>
-                    <p id="display-email" class="text-gray-500 mb-8">{{ Auth::user()->email ?? 'guest@example.com' }}</p>
+        <!-- 7. REQUEST ARRANGEMENT VIEW -->
+        <div id="view-request" class="view-section hidden flex-grow w-full max-w-2xl mx-auto px-4 py-12 pt-28 text-[#4A4A3A]">
+            <div class="bg-white p-10 rounded-xl shadow-xl">
+                <h2 class="font-rosarivo text-3xl mb-4 text-center">Request Arrangement</h2>
+                <p class="text-center text-gray-500 mb-8 font-lato">Have a specific vision? Describe your dream arrangement or call us directly.</p>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Describe Your Arrangement</label>
+                        <textarea id="request-description" class="w-full h-40 border border-gray-300 rounded-lg p-4 focus:border-[#86A873] focus:ring focus:ring-[#86A873] focus:ring-opacity-50 font-lato" placeholder="I need a bouquet with blue hydrangeas and white roses..."></textarea>
+                    </div>
                     
-                    <div class="space-y-3 max-w-xs mx-auto">
-                        <button onclick="app.account.toggleEdit()" class="block w-full py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm uppercase tracking-wide cursor-pointer">Edit Profile</button>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="block w-full py-3 bg-[#4A4A3A] text-white rounded-lg hover:bg-[#3a3a2e] transition-colors font-bold text-sm uppercase tracking-wide shadow-md cursor-pointer">Log Out</button>
-                        </form>
+                    <button onclick="app.request.submit()" class="w-full bg-[#86A873] hover:bg-[#759465] text-white py-4 rounded-lg font-bold text-sm uppercase tracking-wider shadow-lg transition-colors">
+                        Send Request to Florist
+                    </button>
+
+                    <div class="relative flex py-4 items-center">
+                        <div class="flex-grow border-t border-gray-300"></div>
+                        <span class="flex-shrink-0 mx-4 text-gray-400">OR</span>
+                        <div class="flex-grow border-t border-gray-300"></div>
+                    </div>
+
+                    <button onclick="app.request.call()" class="w-full bg-[#4A4A3A] hover:bg-[#3a3a2e] text-white py-4 rounded-lg font-bold text-sm uppercase tracking-wider shadow-lg transition-colors flex items-center justify-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        Call The Shop
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. ACCOUNT VIEW (Expanded) -->
+        <div id="view-account" class="view-section hidden flex-grow w-full max-w-4xl mx-auto px-4 py-12 pt-28 text-[#4A4A3A]">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Profile Card -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white p-8 rounded-xl shadow-xl text-center h-full">
+                        <!-- Display Mode -->
+                        <div id="account-display">
+                            <div class="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl shadow-inner">👤</div>
+                            <h2 id="display-name" class="font-rosarivo text-2xl mb-1 text-gray-800">{{ Auth::user()->name ?? 'Guest User' }}</h2>
+                            <p id="display-email" class="text-sm text-gray-500 mb-6">{{ Auth::user()->email ?? 'guest@example.com' }}</p>
+                            
+                            <div class="space-y-3">
+                                <button onclick="app.account.toggleEdit()" class="block w-full py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-bold text-xs uppercase tracking-wide cursor-pointer">Edit Profile</button>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="block w-full py-3 bg-[#4A4A3A] text-white rounded-lg hover:bg-[#3a3a2e] transition-colors font-bold text-xs uppercase tracking-wide shadow-md cursor-pointer">Log Out</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Edit Mode -->
+                        <div id="account-edit" class="hidden text-left">
+                            <h3 class="font-rosarivo text-xl mb-4 text-center">Edit Profile</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Name</label>
+                                    <input type="text" id="edit-name" class="w-full text-sm border-gray-300 rounded-md px-3 py-2 focus:border-[#86A873]" value="{{ Auth::user()->name ?? '' }}">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Email</label>
+                                    <input type="email" id="edit-email" class="w-full text-sm border-gray-300 rounded-md px-3 py-2 focus:border-[#86A873]" value="{{ Auth::user()->email ?? '' }}">
+                                </div>
+                                <div class="flex gap-2 mt-4">
+                                    <button onclick="app.account.toggleEdit()" class="flex-1 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-600 text-xs font-bold uppercase">Cancel</button>
+                                    <button onclick="app.account.save()" class="flex-1 py-2 bg-[#86A873] hover:bg-[#759465] text-white rounded text-xs font-bold uppercase shadow">Save</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Edit Mode (Hidden by default) -->
-                <div id="account-edit" class="hidden text-left">
-                    <h3 class="font-rosarivo text-2xl mb-6 text-center">Edit Profile</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Name</label>
-                            <input type="text" id="edit-name" class="w-full border-gray-300 rounded-md shadow-sm px-4 py-3 focus:border-[#86A873] focus:ring focus:ring-[#86A873] focus:ring-opacity-50" value="{{ Auth::user()->name ?? '' }}">
+                <!-- Address Management -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white p-8 rounded-xl shadow-xl h-full">
+                        <div class="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                            <h3 class="font-rosarivo text-2xl text-[#4A4A3A]">Delivery Addresses</h3>
+                            <button onclick="app.account.showAddAddress()" class="text-sm text-[#86A873] font-bold uppercase hover:underline cursor-pointer flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                Add New
+                            </button>
                         </div>
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
-                            <input type="email" id="edit-email" class="w-full border-gray-300 rounded-md shadow-sm px-4 py-3 focus:border-[#86A873] focus:ring focus:ring-[#86A873] focus:ring-opacity-50" value="{{ Auth::user()->email ?? '' }}">
+
+                        <!-- Address List Container -->
+                        <div id="address-list" class="space-y-4">
+                            <!-- Addresses will be injected here by JS -->
+                            <p class="text-gray-400 italic text-sm text-center py-4">No addresses saved yet.</p>
                         </div>
-                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Phone</label>
-                            <input type="text" id="edit-phone" class="w-full border-gray-300 rounded-md shadow-sm px-4 py-3 focus:border-[#86A873] focus:ring focus:ring-[#86A873] focus:ring-opacity-50" placeholder="+63 900 000 0000">
+
+                        <!-- Add/Edit Address Form (Hidden) -->
+                        <div id="address-form" class="hidden mt-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <h4 id="address-form-title" class="font-bold text-[#4A4A3A] mb-4 uppercase text-xs tracking-wide">New Address</h4>
+                            <input type="hidden" id="addr-id">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div class="md:col-span-2">
+                                    <input type="text" id="addr-label" placeholder="Label (e.g. Home, Office)" class="w-full text-sm border-gray-300 rounded-md px-3 py-2 focus:border-[#86A873]">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <input type="text" id="addr-street" placeholder="Street Address" class="w-full text-sm border-gray-300 rounded-md px-3 py-2 focus:border-[#86A873]">
+                                </div>
+                                <div>
+                                    <input type="text" id="addr-city" placeholder="City" class="w-full text-sm border-gray-300 rounded-md px-3 py-2 focus:border-[#86A873]">
+                                </div>
+                                <div>
+                                    <input type="text" id="addr-zip" placeholder="Zip Code" class="w-full text-sm border-gray-300 rounded-md px-3 py-2 focus:border-[#86A873]">
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-3">
+                                <button onclick="app.account.cancelAddress()" class="text-gray-500 text-xs font-bold uppercase hover:text-gray-700">Cancel</button>
+                                <button onclick="app.account.saveAddress()" class="bg-[#4A4A3A] text-white px-6 py-2 rounded text-xs font-bold uppercase hover:bg-[#3a3a2e]">Save Address</button>
+                            </div>
                         </div>
-                        <div class="flex gap-3 mt-6">
-                            <button onclick="app.account.toggleEdit()" class="flex-1 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 font-bold text-sm uppercase transition-colors">Cancel</button>
-                            <button onclick="app.account.save()" class="flex-1 py-3 bg-[#86A873] hover:bg-[#759465] text-white rounded-lg font-bold text-sm uppercase shadow-lg transition-colors">Save Changes</button>
-                        </div>
+
                     </div>
                 </div>
             </div>

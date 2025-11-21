@@ -48,7 +48,8 @@
     <div id="product-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4" style="background-color: rgba(0, 0, 0, 0.6); display: none;">
         <div class="relative w-full max-w-4xl bg-[#F5F5F0] rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden animate-fade-in">
             
-            <button data-modal-close class="absolute top-4 left-4 flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors z-10 uppercase tracking-wide">
+            <!-- Updated Back Button Style -->
+            <button data-modal-close class="absolute top-6 left-6 flex items-center gap-2 text-xs font-bold text-[#4A4A3A] hover:text-white hover:bg-[#4A4A3A] transition-all z-20 uppercase tracking-wide bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-md border border-gray-200">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
                 </svg>
@@ -59,7 +60,7 @@
                 <img id="modal-product-image" src="" alt="Product" class="absolute inset-0 w-full h-full object-cover">
             </div>
 
-            <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center text-gray-800">
+            <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center text-gray-800 pt-16"> <!-- Added pt-16 for space -->
                 <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Flower Description</h2>
                 <h3 id="modal-product-title" class="font-rosarivo text-3xl md:text-4xl mb-4 text-[#4A4A3A]">Product Name</h3>
                 <p id="modal-product-description" class="text-sm text-gray-600 leading-relaxed mb-8">

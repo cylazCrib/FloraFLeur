@@ -8,6 +8,7 @@ window.app = {
         cart: [],
         favorites: [],
         orders: [], 
+        addresses: [],
         products: [
             // --- Bouquets ---
             { 
@@ -19,8 +20,6 @@ window.app = {
                 image: 'https://i.pinimg.com/736x/20/d9/75/20d975ae5d4f33d0caed1a0dad56b4a1.jpg',
                 description: 'A timeless classic. This bouquet features 12 premium long-stemmed red roses, hand-tied with satin ribbon and accented with fresh baby’s breath and eucalyptus.'
             },
-            // Removed Luxury Flower Box (ID 4)
-            // Removed Tulip Bundle (ID 5)
             {
                 id: 11,
                 name: 'Elegant White Roses',
@@ -95,9 +94,6 @@ window.app = {
                 image: 'https://i.pinimg.com/1200x/85/db/85/85db85f46627b46a16c2cd697a72cc21.jpg',
                 description: 'Create a magical backdrop for your special day. This custom floral arch features cascading white roses, lush greenery, and seasonal blooms.'
             },
-            // Removed Rustic Wedding Centerpiece (ID 13)
-            // Removed Pastel Wedding Aisle (ID 14)
-            // Removed Grand Church Arrangement (ID 15)
             {
                 id: 16,
                 name: 'Boho Wedding Backdrop',
@@ -180,7 +176,7 @@ window.app = {
                 price: 1100, 
                 category: 'potted', 
                 occasion: 'all', 
-                image: 'https://i.pinimg.com/736x/6c/33/fa/6c33fadc5c9fb4ac66e32fde4c688b92.jpg',
+                image: 'https://images.unsplash.com/photo-1599598425947-320a20639026?q=80&w=800&auto=format&fit=crop',
                 description: 'Known for its heart-shaped leaves with striking pink and green patterns. A stunning centerpiece that adds an artistic touch to any room.'
             },
             { 
@@ -210,7 +206,6 @@ window.app = {
                 image: 'https://i.pinimg.com/736x/bc/8d/ca/bc8dcab126ff40e3f95964141633a7d1.jpg',
                 description: 'A robust indoor tree with thick, glossy burgundy-green leaves. Adds magnificent height and drama to modern interiors.'
             },
-            // New Potted Plants
             {
                 id: 32,
                 name: 'Monstera Deliciosa',
@@ -285,17 +280,20 @@ window.app = {
     },
 
     init() {
-        // Load data from localStorage
+        // Load data from localStorage if available
         const storedCart = localStorage.getItem('flora_cart');
         const storedFavs = localStorage.getItem('flora_favs');
         const storedOrders = localStorage.getItem('flora_orders');
+        const storedAddresses = localStorage.getItem('flora_addresses');
 
         if (storedCart) this.state.cart = JSON.parse(storedCart);
         if (storedFavs) this.state.favorites = JSON.parse(storedFavs);
         if (storedOrders) this.state.orders = JSON.parse(storedOrders);
+        if (storedAddresses) this.state.addresses = JSON.parse(storedAddresses);
 
         this.updateBadges();
         this.nav.init();
+        this.account.renderAddresses();
         
         // Setup Modal Listeners
         document.querySelectorAll('[data-modal-close]').forEach(btn => {
@@ -306,14 +304,14 @@ window.app = {
             });
         });
 
-        // Quantity buttons
+        // Quantity buttons in modal
         const minusBtn = document.querySelector('.quantity-btn-minus');
         const plusBtn = document.querySelector('.quantity-btn-plus');
         
         if(minusBtn) minusBtn.addEventListener('click', () => this.modal.adjustQuantity(-1));
         if(plusBtn) plusBtn.addEventListener('click', () => this.modal.adjustQuantity(1));
         
-        // Modal Checkout
+        // Modal Action Buttons
         const modalCheckout = document.querySelector('#product-modal .btn-checkout');
         if(modalCheckout) {
             modalCheckout.addEventListener('click', () => {
@@ -323,7 +321,7 @@ window.app = {
             });
         }
         
-        // Modal Add to Cart
+        // Add to cart button inside modal
         const modalAddToCart = document.querySelector('#product-modal button:first-of-type');
         if(modalAddToCart) {
             modalAddToCart.addEventListener('click', () => {
@@ -333,7 +331,7 @@ window.app = {
             });
         }
 
-        // Payment
+        // Payment Modal
         const placeOrderBtn = document.querySelector('.btn-place-order');
         if(placeOrderBtn) {
             placeOrderBtn.addEventListener('click', () => {
@@ -350,11 +348,11 @@ window.app = {
         }
     },
 
-    // ... (save, updateBadges, toast methods remain the same) ...
     save() {
         localStorage.setItem('flora_cart', JSON.stringify(this.state.cart));
         localStorage.setItem('flora_favs', JSON.stringify(this.state.favorites));
         localStorage.setItem('flora_orders', JSON.stringify(this.state.orders));
+        localStorage.setItem('flora_addresses', JSON.stringify(this.state.addresses));
         this.updateBadges();
     },
 
@@ -391,6 +389,7 @@ window.app = {
 
     nav: {
         init() {
+            // Ensure correct initial state
             this.hideAll();
             const dash = document.getElementById('view-dashboard');
             if(dash) {
@@ -398,16 +397,19 @@ window.app = {
                 setTimeout(() => dash.classList.add('active'), 50);
                 const bg = document.getElementById('bg-image-container');
                 if (bg) bg.style.opacity = '1';
+                if (bg) bg.classList.remove('bg-faded'); 
             }
         },
 
         hideAll() {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('active'); // Ensure animation resets
+            });
             window.scrollTo(0, 0); 
             
             const bg = document.getElementById('bg-image-container');
-            if (bg) bg.style.opacity = '0'; 
+            if (bg) bg.classList.add('bg-faded'); 
             document.getElementById('app-container-dashboard').classList.remove('bg-[#F5F5F0]'); 
         },
 
@@ -418,8 +420,18 @@ window.app = {
             dash.classList.remove('hidden');
             setTimeout(() => dash.classList.add('active'), 50);
             
+            // Restore full background
             const bg = document.getElementById('bg-image-container');
-            if (bg) bg.style.opacity = '1';
+            if (bg) bg.classList.remove('bg-faded'); 
+        },
+
+        showRequest(e) {
+            if(e) e.preventDefault();
+            this.hideAll();
+            const view = document.getElementById('view-request');
+            view.classList.remove('hidden');
+            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
+            document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
         },
 
         filterProducts(filter, title) {
@@ -429,6 +441,7 @@ window.app = {
             this.hideAll();
             const view = document.getElementById('view-products');
             view.classList.remove('hidden');
+            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
             document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
             
             document.getElementById('product-category-title').innerText = title;
@@ -465,12 +478,12 @@ window.app = {
             });
         },
 
-        // ... (showCart, showFavorites, showPurchases, switchPurchaseTab, showAbout remain the same) ...
         showCart(e) {
             if(e) e.preventDefault();
             this.hideAll();
             const view = document.getElementById('view-cart');
             view.classList.remove('hidden');
+            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
             document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
             window.app.cart.render();
         },
@@ -480,6 +493,7 @@ window.app = {
             this.hideAll();
             const view = document.getElementById('view-favorites');
             view.classList.remove('hidden');
+            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
             document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
             window.app.favorites.render();
         },
@@ -488,6 +502,7 @@ window.app = {
             this.hideAll();
             const view = document.getElementById('view-purchases');
             view.classList.remove('hidden');
+            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
             document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
             this.switchPurchaseTab(tab);
         },
@@ -508,7 +523,7 @@ window.app = {
             const filteredOrders = window.app.state.orders.filter(o => o.status === tab);
             
             if(filteredOrders.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-gray-400 italic">No orders in this category.</div>`;
+                container.innerHTML = `<div class="text-center py-10 text-gray-400 italic bg-white/80 backdrop-blur-sm rounded-lg">No orders in this category.</div>`;
                 return;
             }
 
@@ -542,6 +557,7 @@ window.app = {
             this.hideAll();
             const view = document.getElementById('view-about');
             view.classList.remove('hidden');
+            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
             document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
         },
 
@@ -550,6 +566,7 @@ window.app = {
             this.hideAll();
             const view = document.getElementById('view-account');
             view.classList.remove('hidden');
+            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
             document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
         }
     },
@@ -764,6 +781,125 @@ window.app = {
             // In a real app, you would send an AJAX request here.
             window.app.toast.show('Profile updated successfully!');
             this.toggleEdit();
+        },
+        
+        // Address Logic
+        showAddAddress() {
+            document.getElementById('address-form').classList.remove('hidden');
+            document.getElementById('address-form-title').innerText = 'New Address';
+            // Clear fields
+            document.getElementById('addr-id').value = '';
+            document.getElementById('addr-label').value = '';
+            document.getElementById('addr-street').value = '';
+            document.getElementById('addr-city').value = '';
+            document.getElementById('addr-zip').value = '';
+        },
+        cancelAddress() {
+            document.getElementById('address-form').classList.add('hidden');
+        },
+        saveAddress() {
+            const id = document.getElementById('addr-id').value;
+            const label = document.getElementById('addr-label').value;
+            const street = document.getElementById('addr-street').value;
+            const city = document.getElementById('addr-city').value;
+            const zip = document.getElementById('addr-zip').value;
+
+            if (!label || !street || !city) {
+                alert('Please fill required fields');
+                return;
+            }
+
+            const newAddr = {
+                id: id || Date.now(),
+                label,
+                street,
+                city,
+                zip
+            };
+
+            if (id) {
+                // Edit existing
+                const index = window.app.state.addresses.findIndex(a => a.id == id);
+                if (index !== -1) {
+                    window.app.state.addresses[index] = newAddr;
+                }
+            } else {
+                // Add new
+                window.app.state.addresses.push(newAddr);
+            }
+
+            window.app.save();
+            this.renderAddresses();
+            this.cancelAddress();
+            window.app.toast.show('Address saved successfully!');
+        },
+        deleteAddress(id) {
+            if(confirm('Delete this address?')) {
+                window.app.state.addresses = window.app.state.addresses.filter(a => a.id != id);
+                window.app.save();
+                this.renderAddresses();
+            }
+        },
+        editAddress(id) {
+            const addr = window.app.state.addresses.find(a => a.id == id);
+            if(!addr) return;
+
+            document.getElementById('addr-id').value = addr.id;
+            document.getElementById('addr-label').value = addr.label;
+            document.getElementById('addr-street').value = addr.street;
+            document.getElementById('addr-city').value = addr.city;
+            document.getElementById('addr-zip').value = addr.zip;
+
+            document.getElementById('address-form').classList.remove('hidden');
+            document.getElementById('address-form-title').innerText = 'Edit Address';
+        },
+        renderAddresses() {
+            const container = document.getElementById('address-list');
+            if(!container) return;
+            
+            container.innerHTML = '';
+            
+            if (window.app.state.addresses.length === 0) {
+                container.innerHTML = `<p class="text-gray-400 italic text-sm text-center py-4">No addresses saved yet.</p>`;
+                return;
+            }
+
+            window.app.state.addresses.forEach(addr => {
+                const div = document.createElement('div');
+                div.className = 'border border-gray-200 rounded-lg p-4 flex justify-between items-center bg-gray-50';
+                div.innerHTML = `
+                    <div>
+                        <span class="text-xs font-bold text-[#86A873] uppercase tracking-wide block mb-1">${addr.label}</span>
+                        <p class="text-sm text-gray-700">${addr.street}, ${addr.city} ${addr.zip}</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="app.account.editAddress(${addr.id})" class="text-gray-400 hover:text-[#4A4A3A]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
+                        <button onclick="app.account.deleteAddress(${addr.id})" class="text-gray-400 hover:text-red-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+    },
+
+    request: {
+        submit() {
+            const desc = document.getElementById('request-description').value;
+            if(!desc.trim()) {
+                alert('Please describe your request.');
+                return;
+            }
+            // Simulate sending
+            document.getElementById('request-description').value = '';
+            window.app.toast.show('Request sent to florist!');
+            setTimeout(() => window.app.nav.showDashboard(), 1500);
+        },
+        call() {
+            window.location.href = 'tel:+1234567890';
         }
     }
 };
