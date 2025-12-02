@@ -9,268 +9,45 @@ window.app = {
         favorites: [],
         orders: [], 
         addresses: [],
+        deliveryMethod: 'delivery', 
+        selectedAddress: null,
+        paymentMethod: null,
         products: [
-            // --- Bouquets ---
-            { 
-                id: 1, 
-                name: 'Red Roses Bouquet', 
-                price: 1500, 
-                category: 'bouquet', 
-                occasion: 'valentines', 
-                image: 'https://i.pinimg.com/736x/20/d9/75/20d975ae5d4f33d0caed1a0dad56b4a1.jpg',
-                description: 'A timeless classic. This bouquet features 12 premium long-stemmed red roses, hand-tied with satin ribbon and accented with fresh baby’s breath and eucalyptus.'
-            },
-            {
-                id: 11,
-                name: 'Elegant White Roses',
-                price: 2500,
-                category: 'bouquet',
-                occasion: 'wedding',
-                image: 'https://i.pinimg.com/736x/fb/b2/ff/fbb2ff7675391e0ec79d8b1e94f9a364.jpg',
-                description: 'Pure and pristine white roses hand-tied for the classic bride. Symbolizes innocence and new beginnings.'
-            },
-            {
-                id: 12,
-                name: 'Classic Bridal Bouquet',
-                price: 2800,
-                category: 'bouquet',
-                occasion: 'wedding',
-                image: 'https://i.pinimg.com/736x/8d/ec/ea/8decea6c3bfa62dc7abfc85d25f8fab7.jpg',
-                description: 'A sophisticated mix of white roses, peonies, and soft greenery. The quintessential accessory for a timeless wedding look.'
-            },
-            {
-                id: 17,
-                name: 'Deep Red Romance',
-                price: 1800,
-                category: 'bouquet',
-                occasion: 'valentines',
-                image: 'https://i.pinimg.com/736x/2b/ac/5f/2bac5f79e5d7a87a2e4c0a072998ffc7.jpg',
-                description: 'Intense crimson roses wrapped in premium black paper. A dramatic declaration of deep love and passion.'
-            },
-            {
-                id: 18,
-                name: 'Pink & White Delight',
-                price: 1600,
-                category: 'bouquet',
-                occasion: 'valentines',
-                image: 'https://i.pinimg.com/1200x/66/56/5f/66565f8a5b2b1e9ccccf7e33fe6027ea.jpg',
-                description: 'A sweet combination of soft pink and creamy white blooms. Expresses admiration and gentle affection.'
-            },
-            {
-                id: 19,
-                name: 'Sunflower Surprise',
-                price: 1400,
-                category: 'bouquet',
-                occasion: 'valentines',
-                image: 'https://i.pinimg.com/1200x/d4/a7/7c/d4a77c27bf85182d423fa18b06e47784.jpg',
-                description: 'Bright sunflowers mixed with red berries. A cheerful alternative to traditional roses for a love that radiates happiness.'
-            },
-            {
-                id: 20,
-                name: 'Lavender Dreams',
-                price: 1700,
-                category: 'bouquet',
-                occasion: 'valentines',
-                image: 'https://i.pinimg.com/736x/93/70/e3/9370e3f359041ff4e3ae470e15e8a4cd.jpg',
-                description: 'A fragrant bouquet dominated by purple hues, featuring lavender, lilac roses, and statice. Mystical and enchanting.'
-            },
+             // --- Bouquets ---
+            { id: 1, name: 'Red Roses Bouquet', price: 1500, category: 'bouquet', occasion: 'valentines', image: 'https://i.pinimg.com/736x/20/d9/75/20d975ae5d4f33d0caed1a0dad56b4a1.jpg', description: 'A timeless classic.' },
+            { id: 11, name: 'Elegant White Roses', price: 2500, category: 'bouquet', occasion: 'wedding', image: 'https://i.pinimg.com/736x/fb/b2/ff/fbb2ff7675391e0ec79d8b1e94f9a364.jpg', description: 'Pure and pristine white roses.' },
+            { id: 12, name: 'Classic Bridal Bouquet', price: 2800, category: 'bouquet', occasion: 'wedding', image: 'https://i.pinimg.com/736x/8d/ec/ea/8decea6c3bfa62dc7abfc85d25f8fab7.jpg', description: 'Sophisticated mix of white roses.' },
+            { id: 17, name: 'Deep Red Romance', price: 1800, category: 'bouquet', occasion: 'valentines', image: 'https://i.pinimg.com/736x/2b/ac/5f/2bac5f79e5d7a87a2e4c0a072998ffc7.jpg', description: 'Intense crimson roses.' },
+            { id: 18, name: 'Pink & White Delight', price: 1600, category: 'bouquet', occasion: 'valentines', image: 'https://i.pinimg.com/1200x/66/56/5f/66565f8a5b2b1e9ccccf7e33fe6027ea.jpg', description: 'Sweet pink and white blooms.' },
+            { id: 19, name: 'Sunflower Surprise', price: 1400, category: 'bouquet', occasion: 'valentines', image: 'https://i.pinimg.com/1200x/d4/a7/7c/d4a77c27bf85182d423fa18b06e47784.jpg', description: 'Bright sunflowers mixed with berries.' },
+            { id: 20, name: 'Lavender Dreams', price: 1700, category: 'bouquet', occasion: 'valentines', image: 'https://i.pinimg.com/736x/93/70/e3/9370e3f359041ff4e3ae470e15e8a4cd.jpg', description: 'Fragrant purple hues.' },
 
-            // --- Standees (Grand Opening & Wedding) ---
-            { 
-                id: 2, 
-                name: 'Grand Opening Standee', 
-                price: 3500, 
-                category: 'standee', 
-                occasion: 'grand-opening', 
-                image: 'https://i.pinimg.com/1200x/43/b3/4f/43b34f35e4fe86163f3a80e32213212c.jpg',
-                description: 'Make a bold statement for any inauguration. This 6ft standee features vibrant anthuriums, yellow lilies, and tropical foliage to symbolize success and prosperity.'
-            },
-            { 
-                id: 6, 
-                name: 'Wedding Arch', 
-                price: 15000, 
-                category: 'standee', 
-                occasion: 'wedding', 
-                image: 'https://i.pinimg.com/1200x/85/db/85/85db85f46627b46a16c2cd697a72cc21.jpg',
-                description: 'Create a magical backdrop for your special day. This custom floral arch features cascading white roses, lush greenery, and seasonal blooms.'
-            },
-            {
-                id: 16,
-                name: 'Boho Wedding Backdrop',
-                price: 8000,
-                category: 'standee',
-                occasion: 'wedding',
-                image: 'https://i.pinimg.com/1200x/cf/23/7d/cf237d3df5e0ba7b0bcf0025a4ac1f9b.jpg',
-                description: 'A free-spirited backdrop using dried palms, pampas grass, and terracotta roses. Ideal for bohemian-themed nuptials.'
-            },
-            {
-                id: 26,
-                name: 'Radiant Inaugural',
-                price: 3800,
-                category: 'standee',
-                occasion: 'grand-opening',
-                image: 'https://i.pinimg.com/1200x/f5/fc/b9/f5fcb970da51d5a2ed9b64514d232080.jpg',
-                description: 'A striking display of bright orange and red heliconias, symbolizing growth and success. Perfect for business openings.'
-            },
-            {
-                id: 27,
-                name: 'Golden Success',
-                price: 4200,
-                category: 'standee',
-                occasion: 'grand-opening',
-                image: 'https://i.pinimg.com/736x/14/3b/ca/143bca432537a2b32dbcc41fa57a4e2c.jpg',
-                description: 'Tall yellow mums and golden palms create a beacon of prosperity. A luxurious choice for corporate events.'
-            },
-            {
-                id: 28,
-                name: 'Modern Chic Standee',
-                price: 3500,
-                category: 'standee',
-                occasion: 'grand-opening',
-                image: 'https://i.pinimg.com/1200x/a2/6e/68/a26e68dfb26d0aaa83eea06f6114b558.jpg',
-                description: 'A contemporary arrangement with architectural lines, featuring bird of paradise and monstera leaves.'
-            },
-            {
-                id: 29,
-                name: 'Classic Congratulatory',
-                price: 3000,
-                category: 'standee',
-                occasion: 'grand-opening',
-                image: 'https://i.pinimg.com/736x/e7/73/35/e7733529f76975ae6e3eedde5aa229dc.jpg',
-                description: 'Traditional red gerberas and roses on a bamboo tripod. A time-honored way to send your best wishes.'
-            },
-            {
-                id: 30,
-                name: 'Vibrant Victory',
-                price: 3600,
-                category: 'standee',
-                occasion: 'grand-opening',
-                image: 'https://i.pinimg.com/736x/53/e0/1b/53e01b75b570bf237edfbcfd0089ce0e.jpg',
-                description: 'An explosion of color with multi-colored mums and carnations. Celebrates joy and new beginnings.'
-            },
-            {
-                id: 31,
-                name: 'Elegant Opening',
-                price: 4000,
-                category: 'standee',
-                occasion: 'grand-opening',
-                image: 'https://i.pinimg.com/736x/e9/df/b2/e9dfb27f2d71a28621145c692ae1ecd7.jpg',
-                description: 'Sophisticated pink and white lilies arranged with height and grace. Adds a touch of class to any storefront.'
-            },
+            // --- Standees ---
+            { id: 2, name: 'Grand Opening Standee', price: 3500, category: 'standee', occasion: 'grand-opening', image: 'https://i.pinimg.com/1200x/43/b3/4f/43b34f35e4fe86163f3a80e32213212c.jpg', description: 'Make a bold statement.' },
+            { id: 6, name: 'Wedding Arch', price: 15000, category: 'standee', occasion: 'wedding', image: 'https://i.pinimg.com/1200x/85/db/85/85db85f46627b46a16c2cd697a72cc21.jpg', description: 'Magical backdrop.' },
+            { id: 16, name: 'Boho Wedding Backdrop', price: 8000, category: 'standee', occasion: 'wedding', image: 'https://i.pinimg.com/1200x/cf/23/7d/cf237d3df5e0ba7b0bcf0025a4ac1f9b.jpg', description: 'Free-spirited backdrop.' },
+            { id: 26, name: 'Radiant Inaugural', price: 3800, category: 'standee', occasion: 'grand-opening', image: 'https://i.pinimg.com/1200x/f5/fc/b9/f5fcb970da51d5a2ed9b64514d232080.jpg', description: 'Striking display of orange heliconias.' },
+            { id: 27, name: 'Golden Success', price: 4200, category: 'standee', occasion: 'grand-opening', image: 'https://i.pinimg.com/736x/14/3b/ca/143bca432537a2b32dbcc41fa57a4e2c.jpg', description: 'Tall yellow mums and golden palms.' },
+            { id: 28, name: 'Modern Chic Standee', price: 3500, category: 'standee', occasion: 'grand-opening', image: 'https://i.pinimg.com/1200x/a2/6e/68/a26e68dfb26d0aaa83eea06f6114b558.jpg', description: 'Contemporary arrangement.' },
+            { id: 29, name: 'Classic Congratulatory', price: 3000, category: 'standee', occasion: 'grand-opening', image: 'https://i.pinimg.com/736x/e7/73/35/e7733529f76975ae6e3eedde5aa229dc.jpg', description: 'Traditional red gerberas.' },
+            { id: 30, name: 'Vibrant Victory', price: 3600, category: 'standee', occasion: 'grand-opening', image: 'https://i.pinimg.com/736x/53/e0/1b/53e01b75b570bf237edfbcfd0089ce0e.jpg', description: 'Explosion of color.' },
+            { id: 31, name: 'Elegant Opening', price: 4000, category: 'standee', occasion: 'grand-opening', image: 'https://i.pinimg.com/736x/e9/df/b2/e9dfb27f2d71a28621145c692ae1ecd7.jpg', description: 'Sophisticated pink lilies.' },
 
-            // --- Baskets & Plants ---
-            { 
-                id: 3, 
-                name: 'Indoor Fern Basket', 
-                price: 850, 
-                category: 'basket', 
-                occasion: 'all', 
-                image: 'https://i.pinimg.com/736x/0e/24/00/0e2400b844843a0164813e65ced223d8.jpg',
-                description: 'Bring the outdoors in with this lush Boston Fern in a woven seagrass basket. Perfect for air purification and adding a touch of serenity to your living space.'
-            },
-            
             // --- Potted Plants ---
-            { 
-                id: 7, 
-                name: 'Exotic Caladium', 
-                price: 1100, 
-                category: 'potted', 
-                occasion: 'all', 
-                image: 'https://images.unsplash.com/photo-1599598425947-320a20639026?q=80&w=800&auto=format&fit=crop',
-                description: 'Known for its heart-shaped leaves with striking pink and green patterns. A stunning centerpiece that adds an artistic touch to any room.'
-            },
-            { 
-                id: 8, 
-                name: 'Red Anthurium Pot', 
-                price: 1450, 
-                category: 'potted', 
-                occasion: 'all', 
-                image: 'https://i.pinimg.com/736x/3d/ec/b3/3decb3de528c52bb19d8dceb271ff4df.jpg',
-                description: 'Bright, waxy red blooms that last for months. This low-maintenance tropical plant represents hospitality and abundance.'
-            },
-            { 
-                id: 9, 
-                name: 'Peace Lily Elegance', 
-                price: 1300, 
-                category: 'potted', 
-                occasion: 'all', 
-                image: 'https://i.pinimg.com/1200x/cb/58/91/cb5891bd9d2140345723840b7fa9908f.jpg',
-                description: 'An elegant air-purifying plant with glossy dark green leaves and graceful white spathes. A symbol of peace, prosperity, and sympathy.'
-            },
-            { 
-                id: 10, 
-                name: 'Burgundy Rubber Plant', 
-                price: 1850, 
-                category: 'potted', 
-                occasion: 'all', 
-                image: 'https://i.pinimg.com/736x/bc/8d/ca/bc8dcab126ff40e3f95964141633a7d1.jpg',
-                description: 'A robust indoor tree with thick, glossy burgundy-green leaves. Adds magnificent height and drama to modern interiors.'
-            },
-            {
-                id: 32,
-                name: 'Monstera Deliciosa',
-                price: 1600,
-                category: 'potted',
-                occasion: 'all',
-                image: 'https://i.pinimg.com/1200x/7e/0b/34/7e0b34bd83b6be958b31f58d7e9cb91c.jpg',
-                description: 'The iconic Swiss Cheese Plant with massive, glossy, split leaves. A true jungle giant that makes a spectacular focal point in any bright room.'
-            },
-            {
-                id: 33,
-                name: 'Trailing Golden Pothos',
-                price: 950,
-                category: 'potted',
-                occasion: 'all',
-                image: 'https://i.pinimg.com/736x/79/3c/2e/793c2e15c54f92d287e16910763e1913.jpg',
-                description: 'A resilient and fast-growing vine with heart-shaped variegated leaves. Perfect for hanging baskets or cascading from high shelves.'
-            },
+            { id: 3, name: 'Indoor Fern Basket', price: 850, category: 'basket', occasion: 'all', image: 'https://i.pinimg.com/736x/0e/24/00/0e2400b844843a0164813e65ced223d8.jpg', description: 'Lush Boston Fern.' },
+            { id: 7, name: 'Exotic Caladium', price: 1100, category: 'potted', occasion: 'all', image: 'https://i.pinimg.com/736x/4f/82/43/4f824381bc0d0b2fc707c6f2266805fd.jpg', description: 'Heart-shaped leaves.' },
+            { id: 8, name: 'Red Anthurium Pot', price: 1450, category: 'potted', occasion: 'all', image: 'https://i.pinimg.com/736x/3d/ec/b3/3decb3de528c52bb19d8dceb271ff4df.jpg', description: 'Bright waxy red blooms.' },
+            { id: 9, name: 'Peace Lily Elegance', price: 1300, category: 'potted', occasion: 'all', image: 'https://i.pinimg.com/1200x/cb/58/91/cb5891bd9d2140345723840b7fa9908f.jpg', description: 'Elegant air-purifying plant.' },
+            { id: 10, name: 'Burgundy Rubber Plant', price: 1850, category: 'potted', occasion: 'all', image: 'https://i.pinimg.com/736x/bc/8d/ca/bc8dcab126ff40e3f95964141633a7d1.jpg', description: 'Robust indoor tree.' },
+            { id: 32, name: 'Monstera Deliciosa', price: 1600, category: 'potted', occasion: 'all', image: 'https://i.pinimg.com/1200x/7e/0b/34/7e0b34bd83b6be958b31f58d7e9cb91c.jpg', description: 'Iconic Swiss Cheese Plant.' },
+            { id: 33, name: 'Trailing Golden Pothos', price: 950, category: 'potted', occasion: 'all', image: 'https://i.pinimg.com/736x/79/3c/2e/793c2e15c54f92d287e16910763e1913.jpg', description: 'Resilient fast-growing vine.' },
 
             // --- Flower Boxes ---
-            {
-                id: 21,
-                name: 'Peach Hatbox',
-                price: 2100,
-                category: 'box',
-                occasion: 'all',
-                image: 'https://i.pinimg.com/1200x/85/77/1c/85771c431d647833304aa1099abe2f92.jpg',
-                description: 'Warm peach roses arranged in a chic cylindrical box. A modern and stylish gift suitable for any celebration.'
-            },
-            {
-                id: 22,
-                name: 'Blue Hydrangea Box',
-                price: 2300,
-                category: 'box',
-                occasion: 'all',
-                image: 'https://i.pinimg.com/736x/9f/f3/66/9ff3669cb70928b46566894308fbc109.jpg',
-                description: 'Voluminous blue hydrangeas that evoke a sense of calm and ocean breeze. Presented in a matching luxury box.'
-            },
-            {
-                id: 23,
-                name: 'Mixed Spring Box',
-                price: 1950,
-                category: 'box',
-                occasion: 'all',
-                image: 'https://i.pinimg.com/1200x/d6/f5/15/d6f5154991d9d7b9864241758107b22d.jpg',
-                description: 'A vibrant explosion of colors featuring yellow, pink, and orange blooms. Brings the energy of spring into any room.'
-            },
-            {
-                id: 24,
-                name: 'Elegant Black Box',
-                price: 2600,
-                category: 'box',
-                occasion: 'all',
-                image: 'https://i.pinimg.com/1200x/57/f9/6c/57f96c70d16614419bd08b2dd2ff930e.jpg',
-                description: 'Premium red roses set against a matte black box with gold trim. The ultimate luxury floral experience.'
-            },
-            {
-                id: 25,
-                name: 'Heart Shaped Rose Box',
-                price: 2900,
-                category: 'box',
-                occasion: 'valentines',
-                image: 'https://i.pinimg.com/1200x/bf/30/88/bf3088d7dbf1210d450bc9502b5be6a7.jpg',
-                description: 'Red roses meticulously arranged in a heart-shaped box. A romantic gesture that speaks louder than words.'
-            }
+            { id: 21, name: 'Peach Hatbox', price: 2100, category: 'box', occasion: 'all', image: 'https://i.pinimg.com/1200x/85/77/1c/85771c431d647833304aa1099abe2f92.jpg', description: 'Warm peach roses.' },
+            { id: 22, name: 'Blue Hydrangea Box', price: 2300, category: 'box', occasion: 'all', image: 'https://i.pinimg.com/736x/9f/f3/66/9ff3669cb70928b46566894308fbc109.jpg', description: 'Voluminous blue hydrangeas.' },
+            { id: 23, name: 'Mixed Spring Box', price: 1950, category: 'box', occasion: 'all', image: 'https://i.pinimg.com/1200x/d6/f5/15/d6f5154991d9d7b9864241758107b22d.jpg', description: 'Vibrant explosion of colors.' },
+            { id: 24, name: 'Elegant Black Box', price: 2600, category: 'box', occasion: 'all', image: 'https://i.pinimg.com/1200x/57/f9/6c/57f96c70d16614419bd08b2dd2ff930e.jpg', description: 'Premium red roses.' },
+            { id: 25, name: 'Heart Shaped Rose Box', price: 2900, category: 'box', occasion: 'valentines', image: 'https://i.pinimg.com/1200x/bf/30/88/bf3088d7dbf1210d450bc9502b5be6a7.jpg', description: 'Romantic heart-shaped box.' }
         ],
         currentProduct: null,
         currentView: {
@@ -280,7 +57,6 @@ window.app = {
     },
 
     init() {
-        // Load data from localStorage if available
         const storedCart = localStorage.getItem('flora_cart');
         const storedFavs = localStorage.getItem('flora_favs');
         const storedOrders = localStorage.getItem('flora_orders');
@@ -294,34 +70,22 @@ window.app = {
         this.updateBadges();
         this.nav.init();
         this.account.renderAddresses();
+        this.delivery.renderAddressSelect(); 
         
-        // Setup Modal Listeners
+        // Listeners
         document.querySelectorAll('[data-modal-close]').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.getElementById('product-modal').style.display = 'none';
-                document.getElementById('payment-modal').style.display = 'none';
                 document.getElementById('thank-you-modal').style.display = 'none';
             });
         });
 
-        // Quantity buttons in modal
+        // Product Modal
         const minusBtn = document.querySelector('.quantity-btn-minus');
         const plusBtn = document.querySelector('.quantity-btn-plus');
-        
         if(minusBtn) minusBtn.addEventListener('click', () => this.modal.adjustQuantity(-1));
         if(plusBtn) plusBtn.addEventListener('click', () => this.modal.adjustQuantity(1));
         
-        // Modal Action Buttons
-        const modalCheckout = document.querySelector('#product-modal .btn-checkout');
-        if(modalCheckout) {
-            modalCheckout.addEventListener('click', () => {
-                 this.cart.add(this.state.currentProduct, parseInt(document.getElementById('modal-quantity-value').innerText));
-                 document.getElementById('product-modal').style.display = 'none';
-                 this.nav.showCart();
-            });
-        }
-        
-        // Add to cart button inside modal
         const modalAddToCart = document.querySelector('#product-modal button:first-of-type');
         if(modalAddToCart) {
             modalAddToCart.addEventListener('click', () => {
@@ -331,11 +95,13 @@ window.app = {
             });
         }
 
-        // Payment Modal
-        const placeOrderBtn = document.querySelector('.btn-place-order');
-        if(placeOrderBtn) {
-            placeOrderBtn.addEventListener('click', () => {
-                 this.cart.processPayment();
+        // Modal "Check Out" button -> Go to Checkout View
+        const modalCheckout = document.querySelector('#product-modal .btn-checkout');
+        if(modalCheckout) {
+            modalCheckout.addEventListener('click', () => {
+                 this.cart.add(this.state.currentProduct, parseInt(document.getElementById('modal-quantity-value').innerText));
+                 document.getElementById('product-modal').style.display = 'none';
+                 this.nav.showCheckout(); // Navigate to checkout
             });
         }
         
@@ -348,18 +114,19 @@ window.app = {
         }
     },
 
+    // ... (save, updateBadges, toast logic remains same) ...
     save() {
         localStorage.setItem('flora_cart', JSON.stringify(this.state.cart));
         localStorage.setItem('flora_favs', JSON.stringify(this.state.favorites));
         localStorage.setItem('flora_orders', JSON.stringify(this.state.orders));
         localStorage.setItem('flora_addresses', JSON.stringify(this.state.addresses));
         this.updateBadges();
+        this.cart.renderCheckout(); 
     },
 
     updateBadges() {
         const cartCount = this.state.cart.reduce((acc, item) => acc + item.qty, 0);
         const favCount = this.state.favorites.length;
-
         const cartBadge = document.getElementById('cart-badge');
         const favBadge = document.getElementById('fav-badge');
 
@@ -367,7 +134,6 @@ window.app = {
             cartBadge.innerText = cartCount;
             cartBadge.style.opacity = cartCount > 0 ? '1' : '0';
         }
-        
         if(favBadge) {
             favBadge.innerText = favCount;
             favBadge.style.opacity = favCount > 0 ? '1' : '0';
@@ -381,36 +147,51 @@ window.app = {
             toast.querySelector('span').innerText = type === 'success' ? 'Success' : 'Note';
             toast.querySelector('p').innerText = message;
             toast.classList.remove('translate-x-[120%]');
-            setTimeout(() => {
-                toast.classList.add('translate-x-[120%]');
-            }, 3000);
+            setTimeout(() => { toast.classList.add('translate-x-[120%]'); }, 3000);
         }
     },
 
     nav: {
-        init() {
-            // Ensure correct initial state
+        // Helper to hide all views and manage opacity
+        hideAll() {
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.remove('active'); // Start fade out
+                setTimeout(() => {
+                    if (!el.classList.contains('active')) el.classList.add('hidden'); // Hide after fade out starts
+                }, 300); // Match CSS transition time
+                el.classList.add('hidden'); // Immediate hide for snappy feel, allow opacity to transition in next step
+            });
+            window.scrollTo(0, 0); 
+            
+            // Background Logic
+            const bg = document.getElementById('bg-image-container');
+            if (bg) bg.classList.add('bg-faded'); 
+            document.getElementById('app-container-dashboard').classList.remove('bg-[#F5F5F0]'); 
+        },
+
+        // Helper to show a specific view with fade in
+        showView(viewId) {
             this.hideAll();
+            const view = document.getElementById(viewId);
+            if(view) {
+                view.classList.remove('hidden');
+                // Small delay to allow browser to register 'display: block' before adding opacity class
+                setTimeout(() => {
+                    view.classList.add('active');
+                }, 50);
+            }
+             document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
+        },
+
+        init() {
+            // Default view
             const dash = document.getElementById('view-dashboard');
             if(dash) {
                 dash.classList.remove('hidden');
                 setTimeout(() => dash.classList.add('active'), 50);
                 const bg = document.getElementById('bg-image-container');
-                if (bg) bg.style.opacity = '1';
-                if (bg) bg.classList.remove('bg-faded'); 
+                if (bg) bg.classList.remove('bg-faded'); // Full opacity for dashboard
             }
-        },
-
-        hideAll() {
-            document.querySelectorAll('.view-section').forEach(el => {
-                el.classList.add('hidden');
-                el.classList.remove('active'); // Ensure animation resets
-            });
-            window.scrollTo(0, 0); 
-            
-            const bg = document.getElementById('bg-image-container');
-            if (bg) bg.classList.add('bg-faded'); 
-            document.getElementById('app-container-dashboard').classList.remove('bg-[#F5F5F0]'); 
         },
 
         showDashboard(e) {
@@ -420,29 +201,26 @@ window.app = {
             dash.classList.remove('hidden');
             setTimeout(() => dash.classList.add('active'), 50);
             
-            // Restore full background
+            // Special background for dashboard
             const bg = document.getElementById('bg-image-container');
             if (bg) bg.classList.remove('bg-faded'); 
         },
 
-        showRequest(e) {
+        showCheckout(e) {
             if(e) e.preventDefault();
-            this.hideAll();
-            const view = document.getElementById('view-request');
-            view.classList.remove('hidden');
-            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
-            document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
+            if (window.app.state.cart.length === 0) {
+                window.app.toast.show('Cart is empty', 'error');
+                return;
+            }
+            this.showView('view-checkout');
+            window.app.cart.renderCheckout();
         },
 
         filterProducts(filter, title) {
             window.app.state.currentView.filter = filter;
             window.app.state.currentView.title = title;
 
-            this.hideAll();
-            const view = document.getElementById('view-products');
-            view.classList.remove('hidden');
-            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
-            document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
+            this.showView('view-shop');
             
             document.getElementById('product-category-title').innerText = title;
 
@@ -478,32 +256,29 @@ window.app = {
             });
         },
 
-        showCart(e) {
-            if(e) e.preventDefault();
-            this.hideAll();
-            const view = document.getElementById('view-cart');
-            view.classList.remove('hidden');
-            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
-            document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
-            window.app.cart.render();
-        },
-
         showFavorites(e) {
             if(e) e.preventDefault();
-            this.hideAll();
-            const view = document.getElementById('view-favorites');
-            view.classList.remove('hidden');
-            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
-            document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
+            this.showView('view-favorites');
             window.app.favorites.render();
         },
+        
+        showAbout(e) {
+            if(e) e.preventDefault();
+            this.showView('view-about');
+        },
 
+        showAccount(e) {
+             if(e) e.preventDefault();
+            this.showView('view-account');
+        },
+        
+        showRequest(e) {
+            if(e) e.preventDefault();
+            this.showView('view-request');
+        },
+        
         showPurchases(tab = 'to-ship') {
-            this.hideAll();
-            const view = document.getElementById('view-purchases');
-            view.classList.remove('hidden');
-            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
-            document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
+            this.showView('view-purchases');
             this.switchPurchaseTab(tab);
         },
         
@@ -551,27 +326,78 @@ window.app = {
                 container.appendChild(div);
             });
         },
+    },
 
-        showAbout(e) {
-            if(e) e.preventDefault();
-            this.hideAll();
-            const view = document.getElementById('view-about');
-            view.classList.remove('hidden');
-            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
-            document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
-        },
+    payment: {
+        selectMethod(method) {
+            window.app.state.paymentMethod = method;
+            
+            document.querySelectorAll('.payment-method-btn').forEach(btn => {
+                btn.classList.remove('border-[#86A873]', 'text-[#86A873]');
+                btn.classList.add('border-gray-200');
+            });
+            document.getElementById(`pm-${method}`).classList.add('border-[#86A873]', 'text-[#86A873]');
+            document.getElementById(`pm-${method}`).classList.remove('border-gray-200');
 
-        showAccount(e) {
-             if(e) e.preventDefault();
-            this.hideAll();
-            const view = document.getElementById('view-account');
-            view.classList.remove('hidden');
-            setTimeout(() => view.classList.add('active'), 50); // FIXED: ADDED ACTIVE
-            document.getElementById('app-container-dashboard').classList.add('bg-[#F5F5F0]');
+            document.getElementById('form-cod').classList.add('hidden');
+            document.getElementById('form-ewallet').classList.add('hidden');
+            document.getElementById('form-card').classList.add('hidden');
+            
+            if(method === 'cod') document.getElementById('form-cod').classList.remove('hidden');
+            if(method === 'ewallet') document.getElementById('form-ewallet').classList.remove('hidden');
+            if(method === 'card') document.getElementById('form-card').classList.remove('hidden');
         }
     },
 
-    // ... (modal, cart, favorites logic remain the same) ...
+    delivery: {
+        toggleMethod(method) {
+            window.app.state.deliveryMethod = method;
+            
+            const delBtn = document.getElementById('del-delivery');
+            const pickBtn = document.getElementById('del-pickup');
+            
+            if (method === 'delivery') {
+                delBtn.classList.add('bg-[#86A873]', 'text-white', 'border-[#86A873]');
+                delBtn.classList.remove('text-gray-600', 'border-gray-200');
+                pickBtn.classList.remove('bg-[#86A873]', 'text-white', 'border-[#86A873]');
+                pickBtn.classList.add('text-gray-600', 'border-gray-200');
+                
+                document.getElementById('opt-delivery').classList.remove('hidden');
+                document.getElementById('opt-pickup').classList.add('hidden');
+            } else {
+                pickBtn.classList.add('bg-[#86A873]', 'text-white', 'border-[#86A873]');
+                pickBtn.classList.remove('text-gray-600', 'border-gray-200');
+                delBtn.classList.remove('bg-[#86A873]', 'text-white', 'border-[#86A873]');
+                delBtn.classList.add('text-gray-600', 'border-gray-200');
+                
+                document.getElementById('opt-delivery').classList.add('hidden');
+                document.getElementById('opt-pickup').classList.remove('hidden');
+            }
+            
+            window.app.cart.renderCheckout(); 
+        },
+        renderAddressSelect() {
+            const select = document.getElementById('delivery-address-select');
+            if(!select) return;
+            select.innerHTML = '';
+            
+            if (window.app.state.addresses.length === 0) {
+                const opt = document.createElement('option');
+                opt.text = "No saved addresses";
+                select.add(opt);
+                select.disabled = true;
+            } else {
+                select.disabled = false;
+                window.app.state.addresses.forEach(addr => {
+                    const opt = document.createElement('option');
+                    opt.value = addr.id;
+                    opt.text = `${addr.label}`;
+                    select.add(opt);
+                });
+            }
+        }
+    },
+
     modal: {
         open(productId) {
             const p = window.app.state.products.find(x => x.id === productId);
@@ -581,7 +407,6 @@ window.app = {
             
             document.getElementById('modal-product-image').src = p.image;
             document.getElementById('modal-product-title').innerText = p.name;
-            // Inject description here
             const descEl = document.getElementById('modal-product-description');
             if(descEl) descEl.innerText = p.description || 'No description available.';
             
@@ -615,76 +440,109 @@ window.app = {
         remove(id) {
             window.app.state.cart = window.app.state.cart.filter(i => i.id !== id);
             window.app.save();
-            this.render();
+            this.renderCheckout(); // Re-render checkout summary
         },
-        render() {
-            const tbody = document.getElementById('cart-items-container');
-            tbody.innerHTML = '';
-            let total = 0;
+        updateQty(id, delta) {
+            const item = window.app.state.cart.find(i => i.id === id);
+            if(item) {
+                item.qty += delta;
+                if(item.qty <= 0) {
+                     this.remove(id);
+                } else {
+                    window.app.save();
+                }
+            }
+        },
+        renderCheckout() {
+            const container = document.getElementById('checkout-cart-items');
+            if(!container) return;
 
+            container.innerHTML = '';
+            
             if(window.app.state.cart.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-gray-400">Your cart is empty.</td></tr>`;
+                container.innerHTML = `<p class="text-gray-400 text-center italic text-sm">Your cart is empty.</p>`;
+                document.getElementById('checkout-subtotal').innerText = '₱0.00';
+                document.getElementById('checkout-fee').innerText = '₱0.00';
+                document.getElementById('checkout-total').innerText = '₱0.00';
+                return;
             }
 
+            let subtotal = 0;
+            
             window.app.state.cart.forEach(item => {
-                const lineTotal = item.price * item.qty;
-                total += lineTotal;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-6 py-4 flex items-center gap-3">
-                        <img src="${item.image}" class="w-10 h-10 rounded object-cover">
-                        <span class="font-medium text-gray-800">${item.name}</span>
-                    </td>
-                    <td class="px-6 py-4 text-gray-600">₱${item.price.toLocaleString()}</td>
-                    <td class="px-6 py-4 text-gray-600">${item.qty}</td>
-                    <td class="px-6 py-4 font-bold text-[#4A4A3A]">₱${lineTotal.toLocaleString()}</td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="window.app.cart.remove(${item.id})" class="text-red-400 hover:text-red-600 text-xs font-bold uppercase cursor-pointer">Remove</button>
-                    </td>
+                subtotal += item.price * item.qty;
+                const div = document.createElement('div');
+                div.className = 'flex gap-3 items-center bg-gray-50 p-2 rounded border border-gray-100';
+                div.innerHTML = `
+                    <img src="${item.image}" class="w-12 h-12 object-cover rounded">
+                    <div class="flex-grow">
+                        <h4 class="text-xs font-bold text-[#4A4A3A] line-clamp-1">${item.name}</h4>
+                        <p class="text-xs text-gray-500">₱${item.price.toLocaleString()}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="window.app.cart.updateQty(${item.id}, -1)" class="text-gray-400 hover:text-[#4A4A3A] text-xs font-bold px-1">-</button>
+                        <span class="text-xs font-bold w-3 text-center">${item.qty}</span>
+                        <button onclick="window.app.cart.updateQty(${item.id}, 1)" class="text-gray-400 hover:text-[#4A4A3A] text-xs font-bold px-1">+</button>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(div);
             });
 
-            document.getElementById('cart-total').innerText = '₱' + total.toLocaleString();
+            const fee = window.app.state.deliveryMethod === 'delivery' ? 150 : 0;
+            document.getElementById('checkout-subtotal').innerText = '₱' + subtotal.toLocaleString();
+            document.getElementById('checkout-fee').innerText = '₱' + fee.toLocaleString();
+            document.getElementById('checkout-total').innerText = '₱' + (subtotal + fee).toLocaleString();
         },
-        processPayment() {
-            if(window.app.state.cart.length === 0) return;
+        confirmOrder() {
+            if(window.app.state.cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
             
+            if(!window.app.state.paymentMethod) {
+                alert('Please select a payment method.');
+                return;
+            }
+            
+            // Validate Address if delivery
+            if (window.app.state.deliveryMethod === 'delivery' && window.app.state.addresses.length === 0) {
+                alert('Please add a delivery address in your Account settings first.');
+                return;
+            }
+
             const total = window.app.state.cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+            const fee = window.app.state.deliveryMethod === 'delivery' ? 150 : 0;
             
             const newOrder = {
                 id: 'ORD-' + Math.floor(Math.random() * 10000),
                 status: 'to-ship',
                 items: [...window.app.state.cart],
-                total: total,
-                date: new Date().toLocaleDateString()
+                total: total + fee,
+                date: new Date().toLocaleDateString(),
+                method: window.app.state.deliveryMethod,
+                payment: window.app.state.paymentMethod
             };
             
             window.app.state.orders.push(newOrder);
-            window.app.state.cart = []; // Clear cart
+            window.app.state.cart = []; 
             window.app.save();
             
-            document.getElementById('payment-modal').style.display = 'none';
             document.getElementById('thank-you-modal').style.display = 'flex';
         },
-        checkout() {
-            if(window.app.state.cart.length === 0) {
-                window.app.toast.show('Cart is empty', 'error');
-                return;
-            }
-            const total = window.app.state.cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
-            document.getElementById('payment-total-price').innerText = '₱' + total.toLocaleString();
-            document.getElementById('payment-modal').style.display = 'flex';
+        
+        // Legacy function support
+        render() {
+            // Do nothing or redirect
         }
     },
 
+    // ... (favorites, account, request objects remain same) ...
     favorites: {
         has(id) {
             return window.app.state.favorites.some(i => i.id === id);
         },
         toggle(id) {
-            // 1. Update State
-            if(this.has(id)) {
+             if(this.has(id)) {
                 window.app.state.favorites = window.app.state.favorites.filter(i => i.id !== id);
                 window.app.toast.show('Removed from Favorites');
             } else {
@@ -696,27 +554,21 @@ window.app = {
             }
             window.app.save();
 
-            // 2. Handle UI Logic
-            // If we are on the Favorites page, we MUST re-render to remove the item
             const favView = document.getElementById('view-favorites');
             if (!favView.classList.contains('hidden')) {
                 this.render();
                 return; 
             }
-
-            // If we are on the Products Grid page, we do NOT want to re-render the whole grid
-            // because that causes the "flash" and reset to 'all' that you disliked.
-            // Instead, we just find the heart icon and change its color.
-            const btn = document.getElementById(`fav-btn-${id}`);
+            
+            // Also update hearts in grid
+             const btn = document.getElementById(`fav-btn-${id}`);
             if (btn) {
                 const svg = btn.querySelector('svg');
                 if (svg) {
                     if (this.has(id)) {
-                        // Make it red
                         svg.classList.remove('text-gray-600');
                         svg.classList.add('text-red-500', 'fill-current');
                     } else {
-                        // Make it gray
                         svg.classList.remove('text-red-500', 'fill-current');
                         svg.classList.add('text-gray-600');
                     }
@@ -724,7 +576,7 @@ window.app = {
             }
         },
         render() {
-            const grid = document.getElementById('favorites-grid');
+             const grid = document.getElementById('favorites-grid');
             grid.innerHTML = '';
             const msg = document.getElementById('no-favorites-msg');
 
@@ -757,7 +609,7 @@ window.app = {
             }
         }
     },
-
+    
     account: {
         toggleEdit() {
             const display = document.getElementById('account-display');
@@ -778,16 +630,12 @@ window.app = {
             if(name) document.getElementById('display-name').innerText = name;
             if(email) document.getElementById('display-email').innerText = email;
             
-            // In a real app, you would send an AJAX request here.
             window.app.toast.show('Profile updated successfully!');
             this.toggleEdit();
         },
-        
-        // Address Logic
         showAddAddress() {
-            document.getElementById('address-form').classList.remove('hidden');
+             document.getElementById('address-form').classList.remove('hidden');
             document.getElementById('address-form-title').innerText = 'New Address';
-            // Clear fields
             document.getElementById('addr-id').value = '';
             document.getElementById('addr-label').value = '';
             document.getElementById('addr-street').value = '';
@@ -798,7 +646,7 @@ window.app = {
             document.getElementById('address-form').classList.add('hidden');
         },
         saveAddress() {
-            const id = document.getElementById('addr-id').value;
+             const id = document.getElementById('addr-id').value;
             const label = document.getElementById('addr-label').value;
             const street = document.getElementById('addr-street').value;
             const city = document.getElementById('addr-city').value;
@@ -818,19 +666,18 @@ window.app = {
             };
 
             if (id) {
-                // Edit existing
                 const index = window.app.state.addresses.findIndex(a => a.id == id);
                 if (index !== -1) {
                     window.app.state.addresses[index] = newAddr;
                 }
             } else {
-                // Add new
                 window.app.state.addresses.push(newAddr);
             }
 
             window.app.save();
             this.renderAddresses();
             this.cancelAddress();
+            window.app.delivery.renderAddressSelect(); 
             window.app.toast.show('Address saved successfully!');
         },
         deleteAddress(id) {
@@ -838,10 +685,11 @@ window.app = {
                 window.app.state.addresses = window.app.state.addresses.filter(a => a.id != id);
                 window.app.save();
                 this.renderAddresses();
+                window.app.delivery.renderAddressSelect();
             }
         },
         editAddress(id) {
-            const addr = window.app.state.addresses.find(a => a.id == id);
+             const addr = window.app.state.addresses.find(a => a.id == id);
             if(!addr) return;
 
             document.getElementById('addr-id').value = addr.id;
@@ -885,15 +733,14 @@ window.app = {
             });
         }
     },
-
+    
     request: {
-        submit() {
+         submit() {
             const desc = document.getElementById('request-description').value;
             if(!desc.trim()) {
                 alert('Please describe your request.');
                 return;
             }
-            // Simulate sending
             document.getElementById('request-description').value = '';
             window.app.toast.show('Request sent to florist!');
             setTimeout(() => window.app.nav.showDashboard(), 1500);
