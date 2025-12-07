@@ -9,7 +9,13 @@ class InventoryItem extends Model
 {
     use HasFactory;
 
-    protected $guarded = []; // <--- THIS LINE IS CRITICAL
+    protected $fillable = [
+        'shop_id',
+        'name',
+        'code',
+        'type',    // <--- THIS IS CRITICAL for separating Flowers/Items
+        'quantity'
+    ];
 
     public function shop()
     {

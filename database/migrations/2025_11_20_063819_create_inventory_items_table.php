@@ -9,18 +9,15 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void
+ public function up(): void
 {
     Schema::create('inventory_items', function (Blueprint $table) {
         $table->id();
-        // Link to the shop
         $table->foreignId('shop_id')->constrained()->onDelete('cascade');
-
         $table->string('name');
-        $table->string('code')->nullable(); // Optional item code
+        $table->string('code')->nullable();
+        $table->string('type')->default('item'); // 'item' or 'flower'
         $table->integer('quantity')->default(0);
-        $table->string('type'); // 'item' (hard goods) or 'flower' (fresh goods)
-
         $table->timestamps();
     });
 }

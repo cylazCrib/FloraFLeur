@@ -22,6 +22,7 @@ class User extends Authenticatable
     'email',
     'password',
     'role', 
+    'shop_id',
 ];
 
     /**
@@ -47,8 +48,17 @@ class User extends Authenticatable
         ];
     }
 
-   public function shop()
-{
-    return $this->hasOne(Shop::class);
-}
+  public function shop()
+    {
+        // If user is owner (has one shop) OR staff (belongs to shop)
+        // For simplicity in this setup, we treat 'shop_id' on users table as the link
+        // But your Owner logic might use 'user_id' on shops table. 
+        // Let's support both:
+        
+        if ($this->role === 'vendor') {
+             return $this->hasOne(Shop::class, 'user_id');
+        }
+        
+        return $this->belongsTo(Shop::class, 'shop_id');
+    }
 }

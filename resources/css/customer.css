@@ -1,46 +1,5 @@
 /* Custom CSS for specific interactive needs */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.view-section {
-    transition: opacity 0.3s ease-in-out;
-    opacity: 0;
-}
-
-.view-section.active {
-    opacity: 1;
-}
-
-.view-section.hidden {
-    display: none;
-    opacity: 0;
-}
-
-/* Dropdown bridge is handled by Tailwind logic in HTML, but ensured here */
-.group:hover .group-hover\:block {
-    display: block;
-}
-
-/* Add smooth scrolling */
-html {
-    scroll-behavior: smooth;
-}
-
-/* Font specific overrides if needed */
-.font-rosarivo {
-    font-family: 'Rosarivo', serif;
-}
-
-.font-lato {
-    font-family: 'Lato', sans-serif;
-}
-
-/* Background handling */
-#bg-image-container {
-    transition: opacity 0.5s ease, filter 0.5s ease;
-    background-color: #F5F5F0; /* Fallback/Base color behind image */
-}
-
-/* Class applied when not on dashboard to fade and whiten background */
-.bg-faded img {
-    opacity: 0.5 !important;
-    filter: brightness(1.2) grayscale(0.2); /* Whiten/lighten effect */
-}

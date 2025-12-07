@@ -9,28 +9,33 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'shop_id',
+        'user_id',
+        'order_number',
+        'customer_name',
+        'customer_phone',
+        'customer_email',
+        'delivery_address',
+        'delivery_date',
+        'total_amount',
+        'status',
+        'payment_method', // <--- THIS IS CRITICAL
+        'driver_name'
+    ];
 
-    // An order belongs to a Shop
-    public function shop()
-    {
-        return $this->belongsTo(Shop::class);
-    }
-
-    // An order belongs to a Customer (User)
-    public function customer()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
-    // An order has many items
     public function items()
     {
         return $this->hasMany(OrderItem::class);
     }
 
-    public function notifications()
-{
-    return $this->hasMany(OrderNotification::class);
-}
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
+    }
 }

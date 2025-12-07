@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-// We don't need to import Auth here anymore since we moved the check to the controller
+
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LandingPageController;
@@ -45,54 +45,44 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 });
 
 
+
 // 4. Vendor Routes
-// [FIX] Added ->middleware(['auth']) so only logged-in users can enter
 Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function () {
     Route::get('/dashboard', [VendorController::class, 'dashboard'])->name('dashboard');
-    
-    // --- PRODUCT CRUD ROUTES ---
-    Route::get('/products', [VendorProductController::class, 'index'])->name('products.index');
-    Route::post('/products', [VendorProductController::class, 'store'])->name('products.store');
-    Route::post('/products/{product}/update', [VendorProductController::class, 'update'])->name('products.update');
-    Route::delete('/products/{product}', [VendorProductController::class, 'destroy'])->name('products.destroy');
 
-    // --- INVENTORY ROUTES ---
-    Route::get('/inventory', [App\Http\Controllers\VendorInventoryController::class, 'index'])->name('inventory.index');
-    Route::post('/inventory', [App\Http\Controllers\VendorInventoryController::class, 'store'])->name('inventory.store');
-    Route::post('/inventory/{inventory}/update', [App\Http\Controllers\VendorInventoryController::class, 'update'])->name('inventory.update');
-    Route::delete('/inventory/{inventory}', [App\Http\Controllers\VendorInventoryController::class, 'destroy'])->name('inventory.destroy');
-    
-    // --- ORDER ROUTES ---
-    Route::get('/orders', [App\Http\Controllers\VendorOrderController::class, 'index'])->name('orders.index');
-    Route::post('/orders', [VendorOrderController::class, 'store'])->name('orders.store');
-    Route::patch('/orders/{order}/status', [App\Http\Controllers\VendorOrderController::class, 'updateStatus'])->name('orders.updateStatus');
-    Route::get('/orders/{order}', [VendorOrderController::class, 'show'])->name('orders.show');
+    // --- PRODUCTS ---
+    Route::post('/products', [VendorController::class, 'storeProduct'])->name('products.store');
+    Route::post('/products/{id}/update', [VendorController::class, 'updateProduct'])->name('products.update');
+    // Fix: Add the missing update route
+    Route::post('/products/{id}/update', [VendorController::class, 'updateProduct'])->name('products.update');
+    Route::delete('/products/{id}', [VendorController::class, 'destroyProduct'])->name('products.destroy');
 
-   
-    // STAFF ROUTES
-    Route::get('/staff', [App\Http\Controllers\VendorStaffController::class, 'index'])->name('staff.index');
-    Route::post('/staff', [App\Http\Controllers\VendorStaffController::class, 'store'])->name('staff.store');
-    Route::post('/staff/{staff}/update', [App\Http\Controllers\VendorStaffController::class, 'update'])->name('staff.update');
-    Route::patch('/staff/{staff}/toggle', [App\Http\Controllers\VendorStaffController::class, 'toggleStatus'])->name('staff.toggle');
-    // GMAIL & SETTINGS
-    Route::get('/gmail', [VendorController::class, 'gmail'])->name('gmail.index');
-    Route::post('/gmail', [VendorController::class, 'connectGmail'])->name('gmail.connect');
-    
-    Route::get('/settings', [VendorController::class, 'settings'])->name('settings.index');
-    Route::post('/settings/announcement', [VendorController::class, 'postAnnouncement'])->name('settings.announcement');
-    Route::post('/settings/report', [VendorController::class, 'generateReport'])->name('settings.report');
-    Route::post('/settings/password', [VendorController::class, 'updatePassword'])->name('settings.password');
+    // --- INVENTORY ---
+    Route::post('/inventory', [VendorController::class, 'storeInventory'])->name('inventory.store');
+    // Fix: Add the missing update route
+    Route::post('/inventory/{id}/update', [VendorController::class, 'updateInventory'])->name('inventory.update');
+    Route::delete('/inventory/{id}', [VendorController::class, 'destroyInventory'])->name('inventory.destroy');
 
-    Route::patch('/orders/{order}/assign', [VendorOrderController::class, 'assignDriver'])->name('orders.assign');
-    Route::post('/orders/notify', [VendorOrderController::class, 'sendNotification'])->name('orders.notify');
-
+    // --- STAFF ---
+    Route::post('/staff', [VendorController::class, 'storeStaff'])->name('staff.store');
+    Route::post('/staff/{id}/update', [VendorController::class, 'updateStaff'])->name('staff.update');
+    Route::delete('/staff/{id}', [VendorController::class, 'destroyStaff'])->name('staff.destroy');
+    // --- ORDERS ---
+    Route::post('/orders/manual', [VendorController::class, 'storeManualOrder'])->name('orders.manual');
+    Route::patch('/orders/{order}/status', [VendorController::class, 'updateOrderStatus'])->name('orders.updateStatus');
+    Route::patch('/orders/{order}/assign', [VendorController::class, 'assignDriver'])->name('orders.assign');
 });
 
+// ... (Keep the rest of your routes) ...
 
 
 // 5. Customer Routes
 Route::middleware(['auth'])->prefix('customer')->name('customer.')->group(function () {
-    Route::get('/dashboard', [CustomerController::class, 'dashboard'])->name('customer.dashboard');
+    // Show Dashboard
+    Route::get('/dashboard', [CustomerController::class, 'dashboard'])->name('dashboard');
+    
+    // Place Order Route (The connection to the database)
+    Route::post('/order', [CustomerController::class, 'storeOrder'])->name('order.store');
 });
 
 
@@ -105,63 +95,3 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-// --- TEMPORARY ORDER GENERATOR ---
-Route::get('/generate-test-order', function () {
-    // 1. Get the current vendor
-    $user = Illuminate\Support\Facades\Auth::user();
-    
-    if (!$user) {
-        return "ERROR: You are not logged in. Please log in as a Vendor first.";
-    }
-
-    if ($user->role !== 'vendor') {
-        return "ERROR: You are logged in as '" . $user->role . "'. Please log in as a Vendor.";
-    }
-
-    // 2. Get their shop
-    $shop = $user->shop;
-    if (!$shop) {
-        return "ERROR: You don't have a shop! Visit <a href='/fix-shop'>/fix-shop</a> first.";
-    }
-
-    // 3. Ensure we have a product
-    $product = $shop->products()->first();
-    if (!$product) {
-        // Create one if missing
-        $product = $shop->products()->create([
-            'name' => 'Test Rose Bouquet',
-            'description' => 'Generated for testing orders',
-            'price' => 1500.00,
-            'image' => null
-        ]);
-    }
-
-    // 4. Create the Order
-    try {
-        $order = $shop->orders()->create([
-            'user_id' => $user->id, // We'll link it to you for simplicity
-            'order_number' => 'FF-' . rand(10000, 99999),
-            'customer_name' => 'Juan Dela Cruz',
-            'customer_phone' => '0917-123-4567',
-            'customer_email' => 'juan@example.com',
-            'delivery_address' => 'Unit 404, Flora Building, Makati City',
-            'delivery_date' => now()->addDays(3),
-            'total_amount' => 3000.00,
-            'status' => 'Pending'
-        ]);
-
-        // 5. Add Items
-        \App\Models\OrderItem::create([
-            'order_id' => $order->id,
-            'product_id' => $product->id,
-            'product_name' => $product->name,
-            'quantity' => 2,
-            'price' => $product->price
-        ]);
-
-        return "SUCCESS! Created Order <b>#{$order->order_number}</b> for shop <b>'{$shop->name}'</b>. <br><br> <a href='/vendor/orders'>Go to Orders Page</a>";
-
-    } catch (\Exception $e) {
-        return "ERROR creating order: " . $e->getMessage();
-    }
-});
