@@ -41,7 +41,11 @@
                             data-name="{{ $product->name }}"
                             data-description="{{ $product->description }}"
                             data-price="{{ $product->price }}"
+<<<<<<< HEAD
                             data-category="{{ $product->category }}" data-image-url="{{ Storage::url($product->image) }}"
+=======
+                            data-image-url="{{ Storage::url($product->image) }}"
+>>>>>>> e2214ba6ab74e914469bef220d06c502b43d77b6
                             data-update-url="{{ route('vendor.products.update', $product->id) }}"
                             data-delete-url="{{ route('vendor.products.destroy', $product->id) }}">
                             
