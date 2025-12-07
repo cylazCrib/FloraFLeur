@@ -6,7 +6,6 @@
     <header class="main-header">
         <h1>MANAGE PRODUCTS</h1>
         <div class="header-icons-wrapper">
-            <!-- You can link the bell/user icons to their respective routes later -->
             <i class="fa-solid fa-magnifying-glass"></i>
             <i class="fa-regular fa-bell"></i>
             <i class="fa-regular fa-user"></i>
@@ -36,16 +35,14 @@
                         <th>Action</th>
                     </tr>
                 </thead>
-             <tbody id="products-table-body">
+                <tbody id="products-table-body">
                     @forelse($products as $product)
                         <tr data-id="{{ $product->id }}" 
                             data-name="{{ $product->name }}"
                             data-description="{{ $product->description }}"
                             data-price="{{ $product->price }}"
                             data-image-url="{{ Storage::url($product->image) }}"
-                            
                             data-update-url="{{ route('vendor.products.update', $product->id) }}"
-                            
                             data-delete-url="{{ route('vendor.products.destroy', $product->id) }}">
                             
                             <td>
@@ -75,14 +72,12 @@
     </section>
 </main>
 
-<!-- PRODUCT FORM MODAL -->
 <div id="product-form-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <button class="modal-close-btn" data-close-modal> &times; </button>
         <h2 class="modal-title" style="margin-bottom: 2rem;" id="product-modal-title">Add New Product</h2>
         
         <form class="styled-form" id="product-form" enctype="multipart/form-data">
-            <!-- Hidden input to store ID for editing -->
             <input type="hidden" name="product_id" id="product_id">
             
             <div class="form-group">
@@ -105,7 +100,6 @@
                 <input name="image" id="p_image" type="file" accept="image/*">
             </div>
             
-            <!-- Image Preview -->
             <div style="display: flex; justify-content: center;">
                 <img id="image-preview" class="image-preview" alt="Image Preview" 
                      style="display:none; max-width: 150px; max-height: 150px; margin-top: 10px; border-radius: 8px; object-fit: cover;">

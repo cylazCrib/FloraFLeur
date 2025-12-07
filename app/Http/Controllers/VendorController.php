@@ -3,88 +3,126 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Order;
-use App\Models\InventoryItem;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
-class VendorController extends Controller
+class VendorProductController extends Controller
 {
-    public function dashboard()
+    /**
+     * READ: Show the products page.
+     */
+    public function index()
     {
         $shop = Auth::user()->shop;
 
         if (!$shop) {
-            // Fallback if no shop is linked yet
-            return view('vendor.dashboard', [
-                'totalSales' => 0,
-                'totalOrders' => 0,
-                'pendingOrders' => 0,
-                'deliveredOrders' => 0,
-                'inventoryCount' => 0,
-                'lowStockCount' => 0,
-                'recentOrders' => []
-            ]);
+            return redirect()->route('vendor.dashboard')->with('error', 'Shop not found.');
         }
 
-        // 1. Calculate Statistics
-        $totalSales = $shop->orders()->where('status', 'Delivered')->sum('total_amount');
-        $totalOrders = $shop->orders()->count();
-        $pendingOrders = $shop->orders()->where('status', 'Pending')->count();
-        $deliveredOrders = $shop->orders()->where('status', 'Delivered')->count();
-        
-        // 2. Inventory Stats
-        $inventoryCount = $shop->inventory()->count(); // Total unique items
-        $lowStockCount = $shop->inventory()->where('quantity', '<=', 5)->count();
+        // Fetch products, latest first
+        $products = $shop->products()->latest()->get();
 
-        // 3. Fetch Recent Orders (Limit to 5)
-        $recentOrders = $shop->orders()->with('items')->latest()->take(5)->get();
-
-        return view('vendor.dashboard', compact(
-            'totalSales', 
-            'totalOrders', 
-            'pendingOrders', 
-            'deliveredOrders', 
-            'inventoryCount', 
-            'lowStockCount', 
-            'recentOrders'
-        ));
+        return view('vendor.products', compact('products'));
     }
 
-    public function gmail()
-    {
-        return view('vendor.gmail');
-    }
-
-    public function connectGmail(Request $request)
+    /**
+     * CREATE: Save a new product via AJAX.
+     */
+    public function store(Request $request)
     {
         $request->validate([
-            'gmail_email' => 'required|email',
-            'app_password' => 'required|string',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'image' => 'required|image|max:2048', // Max 2MB
         ]);
 
-        return response()->json(['message' => 'Gmail account connected successfully!']);
+        try {
+            $shop = Auth::user()->shop;
+            
+            // Store image in 'storage/app/public/products'
+            $path = $request->file('image')->store('products', 'public');
+
+            $shop->products()->create([
+                'name' => $request->name,
+                'description' => $request->description,
+                'price' => $request->price,
+                'image' => $path,
+            ]);
+
+            return response()->json(['message' => 'Product added successfully!']);
+
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json(['message' => 'Error saving product.', 'errors' => [$e->getMessage()]], 500);
+        }
     }
 
-    public function settings()
+    /**
+     * UPDATE: Update an existing product via AJAX.
+     */
+    public function update(Request $request, Product $product)
     {
-        return view('vendor.settings');
-    }
+        // Authorization: Ensure product belongs to vendor's shop
+        if ($product->shop_id !== Auth::user()->shop->id) {
+            return response()->json(['message' => 'Unauthorized action.'], 403);
+        }
 
-    public function postAnnouncement(Request $request)
-    {
         $request->validate([
-            'title' => 'required|string|max:255',
-            'message' => 'required|string',
-            'target' => 'required|string',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'image' => 'nullable|image|max:2048',
         ]);
 
-        // Here you would save the announcement to the database
-        
-        return response()->json(['message' => 'Announcement posted to ' . $request->target . '!']);
+        try {
+            $data = [
+                'name' => $request->name,
+                'description' => $request->description,
+                'price' => $request->price,
+            ];
+
+            // Handle Image Update
+            if ($request->hasFile('image')) {
+                // Delete old image
+                if ($product->image) {
+                    Storage::disk('public')->delete($product->image);
+                }
+                $data['image'] = $request->file('image')->store('products', 'public');
+            }
+
+            $product->update($data);
+
+            return response()->json(['message' => 'Product updated successfully!']);
+
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json(['message' => 'Error updating product.'], 500);
+        }
     }
 
-    public function generateReport(Request $request)
+    /**
+     * DELETE: Remove a product via AJAX.
+     */
+    public function destroy(Product $product)
     {
-        return response()->json(['message' => 'Generating PDF report... Download will start shortly.']);
+        if ($product->shop_id !== Auth::user()->shop->id) {
+            return response()->json(['message' => 'Unauthorized action.'], 403);
+        }
+
+        try {
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+
+            $product->delete();
+
+            return response()->json(['message' => 'Product deleted successfully!']);
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json(['message' => 'Error deleting product.'], 500);
+        }
     }
 }
