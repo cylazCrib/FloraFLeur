@@ -12,10 +12,13 @@ use App\Models\OrderItem;
 
 class CustomerController extends Controller
 {
-    public function dashboard()
+   public function dashboard()
     {
+        // [FIX] Ensure occasion is selected
         $products = Product::with('shop')->latest()->get();
+        
         $orders = Order::with('items')->where('user_id', Auth::id())->latest()->get();
+        
         return view('customer.dashboard', compact('products', 'orders'));
     }
 

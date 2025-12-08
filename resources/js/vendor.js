@@ -1,150 +1,62 @@
 document.addEventListener('DOMContentLoaded', () => {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    const el = document.getElementById('db-data');
-    
-    const getJSON = (id) => {
-        const e = document.getElementById(id);
-        return e ? JSON.parse(e.dataset.json || '[]') : [];
-    };
 
-<<<<<<< HEAD
     const app = {
-        state: {
-            orders: getJSON('db-data') ? JSON.parse(el.dataset.orders || '[]') : [],
-            products: getJSON('db-data') ? JSON.parse(el.dataset.products || '[]') : [],
-            inventory: getJSON('db-data') ? JSON.parse(el.dataset.inventory || '[]') : [],
-            staff: getJSON('db-data') ? JSON.parse(el.dataset.staff || '[]') : [],
-            drivers: getJSON('db-data') ? JSON.parse(el.dataset.drivers || '[]') : []
-        },
-=======
-    // --- Elements ---
-    const toast = document.getElementById('toast');
-    
-    // --- Helper Functions ---
-    function showToast(message) {
-        if (toast) {
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-    }
->>>>>>> e2214ba6ab74e914469bef220d06c502b43d77b6
-
         init() {
-            this.renderOrders();
-            this.renderDelivery();
-            this.renderProducts();
-            this.renderInventory();
-            this.renderStaff();
             this.listeners();
+            // Ensure Dashboard is active by default if no other view is active
+            if (!document.querySelector('.view.active-view')) {
+                document.getElementById('dashboard-view').classList.add('active-view');
+            }
         },
 
-<<<<<<< HEAD
-        // --- RENDERERS ---
-        renderOrders() {
-            const tbody = document.getElementById('orders-table-body');
-            if(!tbody) return;
-            if(app.state.orders.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">No orders.</td></tr>'; return; }
-            tbody.innerHTML = app.state.orders.map(o => `
-                <tr>
-                    <td>#${o.id}</td>
-                    <td>${o.customer}<br><small style="color:#888">${o.phone}</small></td>
-                    <td>${o.items}</td>
-                    <td>₱${parseFloat(o.total).toLocaleString()}</td>
-                    <td><span class="status status-${o.status.toLowerCase().replace(' ','-')}">${o.status}</span></td>
-                    <td>
-                        <button class="table-action-btn view-order-btn" data-id="${o.db_id}">View</button>
-                        <button class="table-action-btn update-status-btn" data-id="${o.db_id}" data-current="${o.status}">Update</button>
-                    </td>
-                </tr>`).join('');
-        },
-        
-        renderDelivery() {
-            const tbody = document.getElementById('delivery-table-body');
-            if(!tbody) return;
-            const active = app.state.orders.filter(o => o.status !== 'Delivered' && o.status !== 'Canceled');
-            if(active.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No deliveries.</td></tr>'; return; }
-            tbody.innerHTML = active.map(o => {
-                let opts = '<option value="">Select</option>';
-                app.state.drivers.forEach(d => { opts += `<option value="${d.name}" ${o.driver===d.name?'selected':''}>${d.name}</option>`; });
-                const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}`;
-                return `<tr><td>#${o.id}</td><td>${o.address}</td><td><select id="driver-${o.db_id}" class="border p-1">${opts}</select></td><td><button class="table-action-btn assign-driver" data-id="${o.db_id}">Assign</button> <a href="${mapLink}" target="_blank" class="table-action-btn view-link" style="text-decoration:none;border:1px solid #ddd;padding:2px 5px;color:#555;">Map</a></td></tr>`;
-            }).join('');
-        },
-
-        renderProducts() {
-            const tbody = document.getElementById('products-table-body');
-            if(!tbody) return;
-            tbody.innerHTML = app.state.products.map(p => `<tr><td><img src="${p.image}" width="40"></td><td>${p.name}</td><td>${p.description.substring(0,30)}...</td><td>₱${p.price}</td><td><button class="table-action-btn edit-product" data-id="${p.id}" data-name="${p.name}" data-desc="${p.description}" data-price="${p.price}" data-cat="${p.category}">Edit</button> <button style="color:red" class="table-action-btn del-product" data-id="${p.id}">X</button></td></tr>`).join('');
-        },
-
-        renderInventory() {
-            const items = app.state.inventory.filter(i => i.type === 'item');
-            const flowers = app.state.inventory.filter(i => i.type === 'flower');
-            
-            const renderCard = (i) => `<div class="inventory-item" style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:#FCEFF0; border-radius:10px; margin-bottom:0.5rem; border:1px solid #eee;"><div><div style="font-weight:600;">${i.code?i.code+' - ':''}${i.name}</div><div style="font-size:0.85rem; color:#666;">${i.quantity} pcs remaining ${i.quantity<=5?'<span style="color:red;font-weight:bold;">Low Stock!</span>':''}</div></div><div><button class="table-action-btn update-item-btn" data-id="${i.id}" data-name="${i.name}" data-code="${i.code}" data-quantity="${i.quantity}" data-type="${i.type}">Edit</button> <button class="table-action-btn del-inv" data-id="${i.id}" style="color:red;">X</button></div></div>`;
-
-            const iBody = document.getElementById('items-inventory-list');
-            const fBody = document.getElementById('flowers-inventory-list');
-            if(iBody) iBody.innerHTML = items.length ? items.map(renderCard).join('') : '<p class="text-center p-4 text-gray-500">No items.</p>';
-            if(fBody) fBody.innerHTML = flowers.length ? flowers.map(renderCard).join('') : '<p class="text-center p-4 text-gray-500">No flowers.</p>';
-        },
-
-        renderStaff() {
-            const tbody = document.getElementById('staff-table-body');
-            if(!tbody) return;
-            tbody.innerHTML = app.state.staff.map(s => `<tr><td>${s.name}</td><td>${s.email}</td><td>${s.role}</td><td><span class="status status-active">Active</span></td><td><button class="table-action-btn edit-staff" data-id="${s.id}" data-name="${s.name}" data-email="${s.email}" data-phone="${s.phone}" data-role="${s.role}">Edit</button> <button class="table-action-btn del-staff" style="color:red" data-id="${s.id}">X</button></td></tr>`).join('');
-        },
-
-        // --- DETAILS ---
-        viewDetails(id) {
-            const o = app.state.orders.find(order => order.db_id == id);
-            if(!o) return;
-            document.getElementById('order-details-content').innerHTML = `<h3>Order #${o.id}</h3><p><strong>Customer:</strong> ${o.customer}</p><p><strong>Phone:</strong> ${o.phone}</p><p><strong>Address:</strong> ${o.address}</p><hr style="margin:10px 0;"><p><strong>Items:</strong> ${o.items}</p><p><strong>Total:</strong> ₱${parseFloat(o.total).toLocaleString()}</p><p><strong>Status:</strong> ${o.status}</p>`;
-            document.getElementById('order-details-modal').style.display = 'flex';
-        },
-
-        // --- LISTENERS ---
         listeners() {
             document.addEventListener('click', e => {
                 const t = e.target;
                 
-                // Nav
-                if(t.closest('.nav-item')) {
-                    const link = t.closest('.nav-item');
-                    if(link.id === 'logout-btn') { e.preventDefault(); document.getElementById('logout-form')?.submit(); return; }
-                    if(link.dataset.target) {
-                        e.preventDefault();
+                // 1. NAVIGATION
+                if(t.closest('.nav-item') && t.closest('.nav-item').id !== 'logout-btn') {
+                    e.preventDefault();
+                    const target = t.closest('.nav-item').dataset.target;
+                    if(target) {
                         document.querySelectorAll('.view').forEach(v => v.classList.remove('active-view'));
                         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                        document.getElementById(link.dataset.target).classList.add('active-view');
-                        link.classList.add('active');
+                        document.getElementById(target).classList.add('active-view');
+                        t.closest('.nav-item').classList.add('active');
                     }
                 }
 
-                // Modals
+                // 2. MODAL OPENERS (Add)
                 if(t.id === 'new-order-btn') this.openModal('order-form-modal');
                 if(t.id === 'new-product-btn') { this.resetForm('product-form'); this.openModal('product-form-modal'); }
-                if(t.id === 'new-item-btn') { this.resetForm('inventory-form'); document.getElementById('inv-type').value='item'; document.getElementById('inv-modal-title').innerText='Add Item'; this.openModal('inventory-form-modal'); }
-                if(t.id === 'new-flower-btn') { this.resetForm('inventory-form'); document.getElementById('inv-type').value='flower'; document.getElementById('inv-modal-title').innerText='Add Flower'; this.openModal('inventory-form-modal'); }
                 if(t.id === 'new-staff-btn') { this.resetForm('staff-form'); this.openModal('staff-form-modal'); }
-
-                if(t.matches('[data-close-modal]')) {
-                    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+                
+                if(t.id === 'new-item-btn') { 
+                    this.resetForm('inventory-form'); 
+                    document.getElementById('inv-type').value = 'item'; 
+                    document.getElementById('inv-modal-title').innerText = 'Add Item';
+                    this.openModal('inventory-form-modal'); 
+                }
+                if(t.id === 'new-flower-btn') { 
+                    this.resetForm('inventory-form'); 
+                    document.getElementById('inv-type').value = 'flower'; 
+                    document.getElementById('inv-modal-title').innerText = 'Add Flower';
+                    this.openModal('inventory-form-modal'); 
                 }
 
-                // Edit
-                if(t.classList.contains('edit-product')) {
-                    const d = t.dataset;
+                // 3. EDIT ACTIONS (Populate Forms from Data Attributes)
+                if(t.closest('.edit-product-btn')) {
+                    const d = t.closest('.edit-product-btn').dataset;
                     document.getElementById('prod_id').value = d.id;
                     document.getElementById('prod_name').value = d.name;
                     document.getElementById('prod_desc').value = d.desc;
                     document.getElementById('prod_price').value = d.price;
                     document.getElementById('prod_cat').value = d.cat;
+                    if(document.getElementById('prod_occ')) document.getElementById('prod_occ').value = d.occ;
                     this.openModal('product-form-modal');
                 }
-                if(t.classList.contains('update-item-btn')) {
-                    const d = t.dataset;
+                if(t.closest('.update-item-btn')) {
+                    const d = t.closest('.update-item-btn').dataset;
                     document.getElementById('item_id').value = d.id;
                     document.getElementById('inv_name').value = d.name;
                     document.getElementById('inv_code').value = d.code;
@@ -153,8 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('inv-modal-title').innerText = 'Edit ' + d.type;
                     this.openModal('inventory-form-modal');
                 }
-                if(t.classList.contains('edit-staff')) {
-                    const d = t.dataset;
+                if(t.closest('.edit-staff-btn')) {
+                    const d = t.closest('.edit-staff-btn').dataset;
                     document.getElementById('staff_id').value = d.id;
                     document.getElementById('s_name').value = d.name;
                     document.getElementById('s_email').value = d.email;
@@ -163,38 +75,76 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.openModal('staff-form-modal');
                 }
 
-                // Delete
-                if(t.classList.contains('del-inv')) this.deleteItem('/vendor/inventory/'+t.dataset.id);
-                if(t.classList.contains('del-staff')) this.deleteItem('/vendor/staff/'+t.dataset.id);
-                if(t.classList.contains('del-product')) this.deleteItem('/vendor/products/'+t.dataset.id);
+                // 4. CLOSING MODALS
+                if(t.matches('[data-close-modal]') || t.closest('.modal-close-btn')) {
+                    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+                }
+
+                // 5. DELETE ACTIONS
+                if(t.closest('.del-inv')) this.deleteItem('/vendor/inventory/'+t.closest('.del-inv').dataset.id);
+                if(t.closest('.del-staff')) this.deleteItem('/vendor/staff/'+t.closest('.del-staff').dataset.id);
+                if(t.closest('.del-product')) this.deleteItem('/vendor/products/'+t.closest('.del-product').dataset.id);
+
+                // 6. ORDER ACTIONS
+                if(t.closest('.view-order-btn')) this.viewDetails(t.closest('.view-order-btn').dataset);
                 
-                // Status/Assign
-                 if(t.classList.contains('update-status-btn')) this.updateStatus(t.dataset.id, t.dataset.current);
-                 if(t.classList.contains('assign-driver')) this.assignDriver(t.dataset.id);
-                 if(t.classList.contains('view-order-btn')) this.viewDetails(t.dataset.id);
+                if(t.closest('.update-status-btn')) {
+                    const btn = t.closest('.update-status-btn');
+                    const select = document.getElementById(`status-${btn.dataset.id}`);
+                    this.updateStatus(btn.dataset.id, select.value);
+                }
+
+                if(t.closest('.assign-driver-btn')) {
+                    const btn = t.closest('.assign-driver-btn');
+                    this.assignDriver(btn.dataset.id);
+                }
             });
 
-            // Forms
-            const post = (url, body) => fetch(url, { method: 'POST', headers: {'X-CSRF-TOKEN': csrfToken}, body: body }).then(res => { if(res.ok) window.location.reload(); else alert('Error'); });
-            
+            // 7. FORM SUBMISSIONS
+            const post = (url, body) => {
+                fetch(url, { method: 'POST', headers: {'X-CSRF-TOKEN': csrfToken}, body: body })
+                .then(res => res.json())
+                .then(data => { alert(data.message); window.location.reload(); })
+                .catch(() => alert('Network Error'));
+            };
+
             document.getElementById('inventory-form').addEventListener('submit', e => { e.preventDefault(); post('/vendor/inventory', new FormData(e.target)); });
             document.getElementById('staff-form').addEventListener('submit', e => { e.preventDefault(); post('/vendor/staff', new FormData(e.target)); });
             document.getElementById('product-form').addEventListener('submit', e => { e.preventDefault(); post('/vendor/products', new FormData(e.target)); });
             document.getElementById('order-form').addEventListener('submit', e => { e.preventDefault(); post('/vendor/orders/manual', new FormData(e.target)); });
+            document.getElementById('gmail-form').addEventListener('submit', e => { e.preventDefault(); alert('Connected'); });
+            document.getElementById('announcement-form').addEventListener('submit', e => { e.preventDefault(); alert('Posted'); });
         },
 
         openModal(id) { document.getElementById(id).style.display = 'flex'; },
         
         resetForm(id) { 
-            document.getElementById(id).reset(); 
-            const h = document.getElementById(id).querySelector('input[type=hidden]:not([name=type])');
-            if(h) h.value = '';
+            const f = document.getElementById(id);
+            if(f) {
+                f.reset(); 
+                const h = f.querySelector('input[type=hidden]:not([name=type])');
+                if(h) h.value = '';
+            }
         },
-        
-        async updateStatus(id, current) {
-             const next = current === 'Pending' ? 'Approved' : 'Delivered';
-             if(!confirm(`Update to ${next}?`)) return;
-             await fetch(`/vendor/orders/${id}/status`, { method: 'PATCH', headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken}, body: JSON.stringify({status: next}) });
+
+        viewDetails(data) {
+            const content = document.getElementById('order-details-content');
+            content.innerHTML = `
+                <h3 style="font-size:1.2rem; font-weight:bold; margin-bottom:10px;">Order Details</h3>
+                <p><strong>Customer:</strong> ${data.customer}</p>
+                <p><strong>Phone:</strong> ${data.phone}</p>
+                <p><strong>Address:</strong> ${data.address}</p>
+                <hr style="margin:10px 0;">
+                <p><strong>Items:</strong> ${data.items}</p>
+                <p><strong>Total:</strong> ₱${data.total}</p>
+                <p><strong>Status:</strong> ${data.status}</p>
+            `;
+            this.openModal('order-details-modal');
+        },
+
+        async updateStatus(id, newStatus) {
+             if(!confirm(`Update status to "${newStatus}"?`)) return;
+             await fetch(`/vendor/orders/${id}/status`, { method: 'PATCH', headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken}, body: JSON.stringify({status: newStatus}) });
              window.location.reload();
         },
         async assignDriver(id) {
@@ -208,176 +158,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     app.init();
-=======
-    // ============================================================
-    //  1. PRODUCT MANAGEMENT (CRUD & Search)
-    // ============================================================
-    const productModal = document.getElementById('product-form-modal');
-    const productForm = document.getElementById('product-form');
-    
-    // A. Search Functionality (Client-side)
-    const productSearch = document.getElementById('product-search');
-    if (productSearch) {
-        productSearch.addEventListener('input', function(e) {
-            const term = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('#products-table-body tr');
-            
-            rows.forEach(row => {
-                // Ensure row has data attributes before checking
-                if(row.dataset.name) {
-                    const name = row.dataset.name.toLowerCase();
-                    const desc = row.dataset.description ? row.dataset.description.toLowerCase() : '';
-                    
-                    if (name.includes(term) || desc.includes(term)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                }
-            });
-        });
-    }
-
-    // ============================================================
-    //  GLOBAL CLICK LISTENER (Delegation)
-    // ============================================================
-    document.body.addEventListener('click', function(e) {
-        const target = e.target;
-
-        // --- ADD PRODUCT ---
-        if (target.id === 'new-product-btn') {
-            e.preventDefault();
-            if(productForm) {
-                productForm.reset();
-                document.getElementById('product_id').value = ''; 
-                const preview = document.getElementById('image-preview');
-                if(preview) { preview.src = ''; preview.style.display = 'none'; }
-                
-                document.getElementById('product-modal-title').textContent = 'Add New Product';
-                document.getElementById('save-product-btn').textContent = 'Add Product';
-                // Set URL for creating new product
-                productForm.dataset.url = '/vendor/products'; 
-            }
-            toggleModal(productModal, true);
-        }
-
-        // --- EDIT PRODUCT ---
-        if (target.closest('.edit-product-btn')) {
-            const row = target.closest('tr');
-            const data = row.dataset;
-            
-            // Populate Form
-            document.getElementById('product_id').value = data.id;
-            document.getElementById('p_name').value = data.name;
-            document.getElementById('p_description').value = data.description;
-            document.getElementById('p_price').value = data.price;
-            
-            // Show Image Preview
-            const preview = document.getElementById('image-preview');
-            if(preview) { 
-                preview.src = data.imageUrl; 
-                preview.style.display = 'block'; 
-            }
-
-            document.getElementById('product-modal-title').textContent = 'Edit Product';
-            document.getElementById('save-product-btn').textContent = 'Update Product';
-            // Set URL for updating specific product
-            productForm.dataset.url = data.updateUrl;
-            toggleModal(productModal, true);
-        }
-
-        // --- DELETE PRODUCT ---
-        if (target.closest('.remove-product-btn')) {
-            if (!confirm('Are you sure you want to delete this product?')) return;
-            const row = target.closest('tr');
-            
-            fetch(row.dataset.deleteUrl, {
-                method: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
-            })
-            .then(res => res.json())
-            .then(data => { 
-                showToast(data.message); 
-                row.remove(); // Remove row from table immediately
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Failed to delete product.');
-            });
-        }
-
-        // --- GLOBAL: CLOSE MODALS ---
-        if (target.matches('[data-close-modal]') || target.classList.contains('modal-overlay')) {
-            const modal = target.closest('.modal-overlay') || target;
-            toggleModal(modal, false);
-        }
-    });
-
-    // ============================================================
-    //  FORM SUBMISSION HANDLER (Generic)
-    // ============================================================
-    async function handleFormSubmit(e, form, modal) {
-        e.preventDefault();
-        const formData = new FormData(form);
-        const url = form.dataset.url;
-        
-        const btn = form.querySelector('button[type="submit"]');
-        const originalText = btn ? btn.innerText : '';
-        if(btn) { btn.disabled = true; btn.innerText = 'Saving...'; }
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST', // Always POST (Laravel handles the rest)
-                body: formData,
-                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
-            });
-            
-            const result = await response.json();
-            
-            if (response.ok) {
-                showToast(result.message);
-                if(modal) toggleModal(modal, false);
-                // Reload to see updated table/images
-                setTimeout(() => window.location.reload(), 500);
-            } else {
-                let msg = result.message || 'Error processing request.';
-                if(result.errors) {
-                    msg += '\n' + Object.values(result.errors).flat().join('\n');
-                }
-                alert(msg);
-            }
-        } catch(error) { 
-            console.error(error); 
-            alert('Network Error occurred.'); 
-        } finally {
-            if(btn) { btn.disabled = false; btn.innerText = originalText; }
-        }
-    }
-
-    // Attach listener to Product Form
-    if (productForm) {
-        productForm.addEventListener('submit', (e) => handleFormSubmit(e, productForm, productModal));
-    }
-
-    // ============================================================
-    //  IMAGE PREVIEW HANDLER
-    // ============================================================
-    const imageInput = document.getElementById('p_image');
-    if (imageInput) {
-        imageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const preview = document.getElementById('image-preview');
-                    preview.src = ev.target.result;
-                    preview.style.display = 'block';
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    // ... (Retain existing Logout and other logic from your original file) ...
->>>>>>> e2214ba6ab74e914469bef220d06c502b43d77b6
 });
