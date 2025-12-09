@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\InventoryItem;
 use App\Models\OrderItem;
 use App\Models\Staff; // <--- NEW MODEL
+use App\Models\CustomRequest;
 
 class VendorController extends Controller
 {
@@ -46,10 +47,12 @@ class VendorController extends Controller
         // [FIX] Fetch Drivers from Staff table (where role is Driver)
         $drivers = Staff::where('shop_id', $shop->id)->where('role', 'Driver')->get();
 
+        $customRequests = CustomRequest::with('user')->latest()->get();
+
         return view('vendor.dashboard', compact(
             'totalSales', 'totalOrders', 'pendingOrders', 'deliveredOrders',
             'inventoryCount', 'lowStockCount', 'recentOrders',
-            'orders', 'products', 'items', 'flowers', 'staff', 'drivers'
+            'orders', 'products', 'inventory', 'items', 'flowers', 'staff', 'drivers', 'customRequests'
         ));
     }
 
@@ -131,5 +134,11 @@ class VendorController extends Controller
         ]);
         OrderItem::create(['order_id' => $order->id, 'product_id' => 0, 'product_name' => $request->product_name, 'quantity' => 1, 'price' => $request->total_amount]);
         return response()->json(['message' => 'Order created']);
+    }
+    
+    // --- CUSTOM REQUEST ACTIONS ---
+    public function updateRequestStatus(Request $request, $id) {
+        CustomRequest::where('id', $id)->update(['status' => $request->status]);
+        return response()->json(['message' => 'Request updated']);
     }
 }

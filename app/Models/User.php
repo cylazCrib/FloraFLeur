@@ -9,26 +9,28 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
-    'name',
-    'email',
-    'password',
-    'role', 
-    'shop_id',
-];
+        'name',
+        'email',
+        'password',
+        'role',      // <--- Required
+        'shop_id',   // <--- CRITICAL: Allows linking to the shop
+        'phone',     // <--- Required for staff details
+        'status',    // <--- Required for Active/Suspended
+        'address',   // <--- Required for delivery address
+    ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -48,17 +50,13 @@ class User extends Authenticatable
         ];
     }
 
-  public function shop()
+    public function shop()
     {
-        // If user is owner (has one shop) OR staff (belongs to shop)
-        // For simplicity in this setup, we treat 'shop_id' on users table as the link
-        // But your Owner logic might use 'user_id' on shops table. 
-        // Let's support both:
-        
+        // If user is a vendor, they own a shop
         if ($this->role === 'vendor') {
              return $this->hasOne(Shop::class, 'user_id');
         }
-        
+        // If user is staff, they belong to a shop
         return $this->belongsTo(Shop::class, 'shop_id');
     }
 }

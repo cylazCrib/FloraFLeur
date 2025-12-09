@@ -14,6 +14,20 @@ document.addEventListener('DOMContentLoaded', () => {
             document.addEventListener('click', e => {
                 const t = e.target;
                 
+                // --- CUSTOM REQUEST UPDATE ---
+                if(t.classList.contains('update-req-btn')) {
+                    const id = t.dataset.id;
+                    const status = document.getElementById(`req-status-${id}`).value;
+                    
+                    if(confirm(`Update status to "${status}"?`)) {
+                        fetch(`/vendor/requests/${id}/status`, {
+                            method: 'PATCH',
+                            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken},
+                            body: JSON.stringify({status: status})
+                        }).then(() => window.location.reload());
+                    }
+                }
+                
                 // 1. NAVIGATION
                 if(t.closest('.nav-item') && t.closest('.nav-item').id !== 'logout-btn') {
                     e.preventDefault();

@@ -78,13 +78,11 @@ Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function (
 
 // 5. Customer Routes
 Route::middleware(['auth'])->prefix('customer')->name('customer.')->group(function () {
-    // Show Dashboard
     Route::get('/dashboard', [CustomerController::class, 'dashboard'])->name('dashboard');
-    
-    // Place Order Route (The connection to the database)
     Route::post('/order', [CustomerController::class, 'storeOrder'])->name('order.store');
+    Route::post('/request', [CustomerController::class, 'storeRequest'])->name('request.store');
+    Route::patch('/profile', [CustomerController::class, 'updateProfile'])->name('profile.update');
 });
-
 
 // 6. Default Auth Routes
 Route::middleware('auth')->group(function () {

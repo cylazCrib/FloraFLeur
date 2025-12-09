@@ -12,6 +12,7 @@
                 <li><a class="nav-item" data-target="inventory-view"><i class="fa-solid fa-box-archive"></i> Inventory</a></li>
                 <li><a class="nav-item" data-target="products-view"><i class="fa-solid fa-boxes-stacked"></i> Manage Products</a></li>
                 <li><a class="nav-item" data-target="staff-view"><i class="fa-solid fa-user-group"></i> Manage Staff</a></li>
+                <li><a class="nav-item" data-target="requests-view"><i class="fa-solid fa-envelope-open-text"></i> Requests</a></li>
             </ul>
         </nav>
         <div class="sidebar-bottom">
@@ -188,17 +189,144 @@
             </section>
         </main>
 
+       <main id="requests-view" class="view">
+            <header class="main-header"><h1>CUSTOMER REQUESTS</h1></header>
+            <section class="content-container">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead><tr><th>Date</th><th>Customer</th><th>Details</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody>
+                            @forelse($customRequests as $req)
+                            <tr>
+                                <td>{{ $req->created_at->format('M d') }}</td>
+                                <td>{{ $req->user->name }}<br><small class="text-gray-500">{{ $req->contact_number }}</small></td>
+                                <td title="{{ $req->description }}">{{ Str::limit($req->description, 40) }}</td>
+                                <td>
+                                    <select id="req-status-{{ $req->id }}" class="border p-1 rounded text-sm">
+                                        <option value="Pending" {{ $req->status=='Pending'?'selected':'' }}>Pending</option>
+                                        <option value="Accepted" {{ $req->status=='Accepted'?'selected':'' }}>Accepted</option>
+                                        <option value="Being Made" {{ $req->status=='Being Made'?'selected':'' }}>Being Made</option>
+                                        <option value="Out for Delivery" {{ $req->status=='Out for Delivery'?'selected':'' }}>Out for Delivery</option>
+                                        <option value="Delivered" {{ $req->status=='Delivered'?'selected':'' }}>Delivered</option>
+                                        <option value="Rejected" {{ $req->status=='Rejected'?'selected':'' }}>Rejected</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <button class="table-action-btn update-req-btn text-green-600" data-id="{{ $req->id }}">Update</button>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="5" class="text-center p-4">No new requests.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+        
         <main id="gmail-view" class="view"><header class="main-header"><h1>Gmail</h1></header><section class="content-container"><p>Integration settings here.</p></section></main>
         <main id="settings-view" class="view"><header class="main-header"><h1>Settings</h1></header><section class="content-container"><p>System settings here.</p></section></main>
     </div>
 </div>
+<div id="order-form-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <button class="modal-close-btn" data-close-modal> × </button>
+        <h2 class="modal-title" style="margin-bottom: 2rem;">Manual Order</h2>
+        <form class="styled-form" id="order-form">
+            <div class="form-group"><label>Customer Name</label><input name="customer_name" required></div>
+            <div class="form-group"><label>Phone</label><input name="customer_phone" required></div>
+            <div class="form-group"><label>Address</label><input name="delivery_address" required></div>
+            <div class="form-group"><label>Product Name</label><input name="product_name" required></div>
+            <div class="form-group"><label>Total (₱)</label><input name="total_amount" type="number" required></div>
+            <div class="form-group"><label>Payment</label>
+                <select name="payment_method">
+                    <option>Cash</option>
+                    <option>G-Cash</option>
+                </select>
+            </div>
+            <button type="submit" class="action-button">Create</button>
+        </form>
+    </div>
+</div>
 
-<div id="order-form-modal" class="modal-overlay" style="display: none;"><div class="modal-content"><button class="modal-close-btn" data-close-modal> × </button><h2 class="modal-title" style="margin-bottom: 2rem;">Manual Order</h2><form class="styled-form" id="order-form"><div class="form-group"><label>Customer Name</label><input name="customer_name" required></div><div class="form-group"><label>Phone</label><input name="customer_phone" required></div><div class="form-group"><label>Address</label><input name="delivery_address" required></div><div class="form-group"><label>Product Name</label><input name="product_name" required></div><div class="form-group"><label>Total (₱)</label><input name="total_amount" type="number" required></div><div class="form-group"><label>Payment</label><select name="payment_method"><option>Cash</option><option>G-Cash</option></select></div><button type="submit" class="action-button">Create</button></form></div></div>
-<div id="product-form-modal" class="modal-overlay" style="display:none;"><div class="modal-content"><button class="modal-close-btn" data-close>x</button><h2>Add Product</h2><form id="product-form" class="styled-form" enctype="multipart/form-data"><input type="hidden" name="product_id" id="prod_id"><div class="form-group"><label>Name</label><input name="name" id="prod_name" required></div><div class="form-group"><label>Desc</label><input name="description" id="prod_desc" required></div><div class="form-group"><label>Price</label><input name="price" id="prod_price" type="number" required></div><div class="form-group"><label>Category</label><select name="category" id="prod_cat"><option value="bouquet">Bouquet</option><option value="box">Box</option><option value="standee">Standee</option><option value="potted">Potted</option></select></div><div class="form-group"><label>Occasion</label><select name="occasion" id="prod_occ"><option value="all">All</option><option value="valentines">Valentines</option><option value="wedding">Wedding</option></select></div><div class="form-group"><label>Image</label><input name="image" type="file"></div><button class="action-button">Save</button></form></div></div>
-<div id="inventory-form-modal" class="modal-overlay" style="display:none;"><div class="modal-content"><button class="modal-close-btn" data-close>x</button><h2 id="inv-modal-title">Item</h2><form id="inventory-form" class="styled-form"><input type="hidden" name="item_id" id="item_id"><input type="hidden" name="type" id="inv-type"><div class="form-group"><label>Name</label><input name="name" id="inv_name" required></div><div class="form-group"><label>Code</label><input name="code" id="inv_code"></div><div class="form-group"><label>Qty</label><input name="quantity" id="inv_qty" type="number" required></div><button class="action-button">Save</button></form></div></div>
-<div id="staff-form-modal" class="modal-overlay" style="display:none;"><div class="modal-content"><button class="modal-close-btn" data-close>x</button><h2>Add Staff</h2><form id="staff-form" class="styled-form"><input type="hidden" name="staff_id" id="staff_id"><div class="form-group"><label>Name</label><input name="name" id="s_name" required></div><div class="form-group"><label>Email</label><input name="email" id="s_email" required></div><div class="form-group"><label>Phone</label><input name="phone" id="s_phone"></div><div class="form-group"><label>Role</label><select name="role" id="s_role"><option>Manager</option><option>Florist</option><option>Driver</option></select></div><button class="action-button">Save</button></form></div></div>
+<div id="product-form-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <button class="modal-close-btn" data-close>x</button>
+        <h2 class="modal-title">Add Product</h2>
+        <form id="product-form" class="styled-form" enctype="multipart/form-data">
+            <input type="hidden" name="product_id" id="prod_id">
+            <div class="form-group"><label>Name</label><input name="name" id="prod_name" required></div>
+            <div class="form-group"><label>Desc</label><input name="description" id="prod_desc" required></div>
+            <div class="form-group"><label>Price</label><input name="price" id="prod_price" type="number" required></div>
+            
+            <div class="form-group"><label>Category</label>
+                <select name="category" id="prod_cat">
+                    <option value="bouquet">Bouquet</option>
+                    <option value="box">Box</option>
+                    <option value="standee">Standee</option>
+                    <option value="potted">Potted</option>
+                </select>
+            </div>
+            
+            <div class="form-group"><label>Occasion (Collection)</label>
+                <select name="occasion" id="prod_occ">
+                    <option value="all">General / All</option>
+                    <option value="valentines">Valentine's</option>
+                    <option value="wedding">Wedding</option>
+                    <option value="birthday">Birthday</option>
+                    <option value="anniversary">Anniversary</option>
+                </select>
+            </div>
 
-<div id="order-details-modal" class="modal-overlay" style="display: none;"><div class="modal-content"><button class="modal-close-btn" data-close-modal> × </button><h2 class="modal-title">Order Details</h2><div id="order-details-content"></div></div></div>
+            <div class="form-group"><label>Image</label><input name="image" type="file"></div>
+            <button class="action-button">Save</button>
+        </form>
+    </div>
+</div>
+
+<div id="inventory-form-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <button class="modal-close-btn" data-close>x</button>
+        <h2 id="inv-modal-title">Item</h2>
+        <form id="inventory-form" class="styled-form">
+            <input type="hidden" name="item_id" id="item_id">
+            <input type="hidden" name="type" id="inv-type">
+            <div class="form-group"><label>Name</label><input name="name" id="inv_name" required></div>
+            <div class="form-group"><label>Code</label><input name="code" id="inv_code"></div>
+            <div class="form-group"><label>Qty</label><input name="quantity" id="inv_qty" type="number" required></div>
+            <button class="action-button">Save</button>
+        </form>
+    </div>
+</div>
+
+<div id="staff-form-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <button class="modal-close-btn" data-close>x</button>
+        <h2>Add Staff</h2>
+        <form id="staff-form" class="styled-form">
+            <input type="hidden" name="staff_id" id="staff_id">
+            <div class="form-group"><label>Name</label><input name="name" id="s_name" required></div>
+            <div class="form-group"><label>Email</label><input name="email" id="s_email" required></div>
+            <div class="form-group"><label>Phone</label><input name="phone" id="s_phone"></div>
+            <div class="form-group"><label>Role</label>
+                <select name="role" id="s_role">
+                    <option>Manager</option>
+                    <option>Florist</option>
+                    <option>Driver</option>
+                </select>
+            </div>
+            <button class="action-button">Save</button>
+        </form>
+    </div>
+</div>
+
+<div id="order-details-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <button class="modal-close-btn" data-close-modal> × </button>
+        <h2 class="modal-title">Order Details</h2>
+        <div id="order-details-content"></div>
+    </div>
+</div>
+
 <div id="toast"></div>
-
 @endsection
