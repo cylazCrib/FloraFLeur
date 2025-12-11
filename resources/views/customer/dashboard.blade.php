@@ -3,6 +3,7 @@
 @section('content')
 
 @php
+    // 1. Prepare Products
     $productsData = $products->map(fn($p) => [
         'id' => $p->id,
         'name' => $p->name,
@@ -13,22 +14,30 @@
         'occasion' => $p->occasion ?? 'all'
     ]);
     
+    // 2. Prepare Orders (Fixing 'undefined' issues)
     $ordersData = $orders->map(fn($o) => [
         'id' => $o->order_number,
         'date' => $o->created_at->format('M d, Y'),
         'status' => $o->status,
         'total' => $o->total_amount,
-        'items' => $o->items
+        // [NEW] Pass the driver name
+        'driver' => $o->driver_name ?? null, 
+        // [FIX] Map 'product_name' to 'name' for JS
+        'items' => $o->items->map(fn($i) => [
+            'name' => $i->product_name, 
+            'qty' => $i->quantity,
+            'price' => $i->price
+        ])
     ]);
 
-    // [FIX] Requests Data for JS
-    $requestsData = $requests->map(fn($r) => [
+    // 3. Prepare Requests
+    $requestsData = isset($requests) ? $requests->map(fn($r) => [
         'id' => $r->id,
         'date' => $r->created_at->format('M d, Y'),
         'description' => $r->description,
         'status' => $r->status,
         'budget' => $r->budget
-    ]);
+    ]) : [];
 @endphp
 
 <div id="db-products-payload" data-products="{{ json_encode($productsData) }}" class="hidden"></div>
@@ -46,9 +55,9 @@
         
         <header class="w-full bg-[#4A4A3A] shadow-md relative z-50">
             <nav class="max-w-[1920px] mx-auto px-6 h-20 flex justify-between items-center">
-                <a href="#" class="nav-link flex items-center gap-2 text-2xl tracking-wider font-rosarivo cursor-pointer" data-target="view-dashboard">
+                <div class="nav-link flex items-center gap-2 text-2xl tracking-wider font-rosarivo cursor-pointer" data-target="view-dashboard">
                     <span>FLORA</span><img src="{{ asset('images/image_8bd93d.png') }}" class="w-7 h-7 object-contain"><span>FLEUR</span>
-                </a>
+                </div>
                 
                 <div class="hidden md:flex items-center space-x-10 text-sm font-medium tracking-wider">
                     <button class="nav-link hover:text-gray-300 uppercase bg-transparent border-none cursor-pointer" data-target="view-dashboard">HOME</button>
@@ -79,7 +88,7 @@
 
                 <div class="flex items-center gap-8">
                     <div class="nav-link flex flex-col items-center cursor-pointer group relative" data-target="view-cart">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        <i class="fa-solid fa-cart-shopping text-xl"></i>
                         <span id="cart-badge" class="absolute -top-2 -right-2 bg-[#E65100] text-white text-[10px] rounded-full w-4 h-4 flex justify-center items-center opacity-0 transition-opacity">0</span>
                     </div>
                     <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" class="bg-[#6B6B61] hover:bg-[#7D7D73] text-white px-5 py-2 rounded text-xs font-medium shadow-sm">LOGOUT</button></form>
@@ -95,17 +104,35 @@
                 </h1>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 w-full">
+                
                 <div class="filter-btn group relative aspect-[3/4] overflow-hidden rounded-xl shadow-2xl cursor-pointer" data-type="all" data-value="all">
-                    <img src="{{ asset('images/image_7eb546.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center"><span class="text-2xl font-rosarivo tracking-wider">Shop All</span></div>
+                    <img src="{{ asset('images/imagegranopening123.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <span class="text-2xl font-rosarivo tracking-wider text-white drop-shadow-md">Shop All</span>
+                    </div>
                 </div>
+
                 <div class="filter-btn group relative aspect-[3/4] overflow-hidden rounded-xl shadow-2xl cursor-pointer mt-0 lg:mt-8" data-type="category" data-value="bouquet">
-                    <img src="{{ asset('images/image_8bd93d.png') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center"><span class="text-2xl font-rosarivo tracking-wider">Bouquets</span></div>
+                    <img src="{{ asset('images/bouquet.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <span class="text-2xl font-rosarivo tracking-wider text-white drop-shadow-md">Bouquets</span>
+                    </div>
                 </div>
-            </div>
-            <div class="flex justify-center w-full mt-4">
-                <button class="filter-btn bg-[#86A873] hover:bg-[#759465] text-white text-sm font-bold py-3 px-10 rounded-lg shadow-lg cursor-pointer border-none" data-type="all" data-value="all">Browse Shop</button>
+
+                <div class="filter-btn group relative aspect-[3/4] overflow-hidden rounded-xl shadow-2xl cursor-pointer" data-type="category" data-value="basket">
+                    <img src="{{ asset('images/flower basket.jpg') }}" onerror="this.src='https://placehold.co/600x800/86A873/white?text=Basket'" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <span class="text-2xl font-rosarivo tracking-wider text-white drop-shadow-md">Baskets</span>
+                    </div>
+                </div>
+
+                <div class="filter-btn group relative aspect-[3/4] overflow-hidden rounded-xl shadow-2xl cursor-pointer mt-0 lg:mt-8" data-type="category" data-value="box">
+                    <img src="{{ asset('images/flower boxes.jpg') }}" onerror="this.src='https://placehold.co/600x800/4A4A3A/white?text=Box'" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <span class="text-2xl font-rosarivo tracking-wider text-white drop-shadow-md">Flower Boxes</span>
+                    </div>
+                </div>
+
             </div>
         </main>
 
@@ -139,10 +166,7 @@
             <div class="bg-white p-10 rounded-xl shadow-xl border border-gray-200">
                 <div class="flex items-center gap-6 pb-8 border-b">
                     <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-3xl shadow-inner">👤</div>
-                    <div>
-                        <h2 class="font-rosarivo text-3xl text-gray-800">{{ Auth::user()->name }}</h2>
-                        <p class="text-gray-500">{{ Auth::user()->email }}</p>
-                    </div>
+                    <div><h2 class="font-rosarivo text-3xl text-[#4A4A3A]">{{ Auth::user()->name }}</h2><p class="text-gray-500">{{ Auth::user()->email }}</p></div>
                 </div>
                 <form id="profile-form" class="mt-8 space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -150,7 +174,7 @@
                         <div><label class="block text-sm font-bold text-gray-600 mb-1">Email</label><input id="prof-email" class="w-full p-3 border rounded bg-gray-50" value="{{ Auth::user()->email }}" readonly></div>
                         <div><label class="block text-sm font-bold text-gray-600 mb-1">Phone</label><input id="prof-phone" class="w-full p-3 border rounded bg-gray-50" value="{{ Auth::user()->phone ?? '' }}" placeholder="09xxxxxxxxx"></div>
                     </div>
-                    <div><label class="block text-sm font-bold text-gray-600 mb-1">Address</label><textarea id="prof-address" rows="3" class="w-full p-3 border rounded bg-gray-50" placeholder="Enter your full delivery address">{{ Auth::user()->address ?? '' }}</textarea></div>
+                    <div><label class="block text-sm font-bold text-gray-600 mb-1">Address</label><textarea id="prof-address" rows="3" class="w-full p-3 border rounded bg-gray-50">{{ Auth::user()->address ?? '' }}</textarea></div>
                     <div class="text-right"><button type="submit" class="btn-save-profile bg-[#86A873] hover:bg-[#759465] text-white font-bold py-3 px-8 rounded-lg shadow-lg">Save Changes</button></div>
                 </form>
             </div>
@@ -161,12 +185,17 @@
             <div class="bg-white/10 border border-page-border-trans rounded-lg shadow-xl p-8 backdrop-blur-md">
                 <p class="text-white/80 mb-6 text-center">Describe your dream bouquet or arrangement.</p>
                 <form id="custom-request-form" class="space-y-6">
-                    <div><label class="block text-sm font-medium text-white/90 mb-2">Description</label><textarea id="request-description" rows="4" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white" required></textarea></div>
+                    <div>
+                        <label class="block text-sm font-medium text-white/90 mb-2">Description</label>
+                        <textarea id="request-description" rows="4" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white" required placeholder="Describe what you need..."></textarea>
+                    </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div><label class="block text-sm font-medium text-white/90 mb-2">Budget (₱)</label><input type="number" id="request-budget" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white"></div>
                         <div><label class="block text-sm font-medium text-white/90 mb-2">Contact</label><input type="tel" id="request-contact" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white"></div>
                     </div>
-                    <div class="text-right"><button type="submit" class="btn-submit-request bg-[#86A873] text-white font-bold py-3 px-8 rounded-lg shadow-lg">Send Request</button></div>
+                    <div class="text-right">
+                        <button type="submit" class="btn-submit-request bg-[#86A873] text-white font-bold py-3 px-8 rounded-lg shadow-lg">Send Request</button>
+                    </div>
                 </form>
             </div>
         </main>
@@ -196,7 +225,6 @@
 <div id="product-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.6);">
     <div class="relative w-full max-w-4xl bg-[#F5F5F0] rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden">
         <button class="modal-close-btn absolute top-4 right-4 text-gray-500 hover:text-red-500 z-50 p-2 text-2xl font-bold">&times;</button>
-        
         <div class="w-full md:w-1/2 h-64 md:h-auto relative"><img id="modal-product-image" class="absolute inset-0 w-full h-full object-cover"></div>
         <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center text-gray-800 pt-16">
             <h3 id="modal-product-title" class="text-3xl mb-4 font-rosarivo"></h3>

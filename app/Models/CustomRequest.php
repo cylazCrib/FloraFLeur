@@ -7,18 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class CustomRequest extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'user_id',
-        'description',
-        'budget',
-        'contact_number',
-        'status'
+        'user_id', 'shop_id', 'description', 'status', 'budget', 'contact_number'
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    public function user() { return $this->belongsTo(User::class); }
+    public function shop() { return $this->belongsTo(Shop::class); }
 }

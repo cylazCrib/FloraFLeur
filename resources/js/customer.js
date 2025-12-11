@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cart: JSON.parse(localStorage.getItem('flora_cart')) || [],
             favorites: JSON.parse(localStorage.getItem('flora_favs')) || [],
             paymentMethod: 'Cash On Delivery',
-            requests: [] // To store requests data
+            requests: []
         },
 
         init() {
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const badge = document.getElementById('cart-badge');
             if(badge) { 
                 badge.innerText = count; 
-                badge.style.opacity = count > 0 ? 1 : 0; // Fixes Dot Logic
+                badge.style.opacity = count > 0 ? 1 : 0; 
             }
         },
 
@@ -53,10 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.hideAll();
                 const container = document.getElementById('app-container-dashboard');
                 if(container) container.classList.add('active');
-                
                 const page = document.getElementById(target);
                 if(page) { page.classList.remove('hidden'); page.classList.add('active'); }
-                
                 const bg = document.getElementById('bg-image-container');
                 if(bg) bg.style.opacity = (target === 'view-dashboard') ? '1' : '0.5';
                 window.scrollTo(0,0);
@@ -74,9 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const container = document.getElementById('purchases-list');
                 container.innerHTML = '';
                 
-                // [FIX] REQUESTS TAB LOGIC
+                // REQUESTS
                 if (tab === 'requests') {
-                    if (app.state.requests.length === 0) {
+                    if (!app.state.requests || app.state.requests.length === 0) {
                         container.innerHTML = `<div class="text-center py-10 text-gray-400">No requests found.</div>`;
                         return;
                     }
@@ -84,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         let color = 'text-gray-500';
                         if(r.status==='Accepted' || r.status==='Being Made') color='text-blue-600';
                         if(r.status==='Completed') color='text-green-600';
+                        if(r.status==='Rejected') color='text-red-600';
                         container.innerHTML += `
                             <div class="bg-white p-6 rounded-lg shadow mb-4 text-gray-800">
                                 <div class="flex justify-between border-b pb-2 mb-2"><span class="font-bold">Request</span><span class="text-sm">${r.date}</span></div>
@@ -97,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // ORDERS TAB
+                // ORDERS
                 const filtered = app.state.orders.filter(o => o.status === tab || (tab==='to-ship' && (o.status!=='Delivered' && o.status!=='Completed' && o.status!=='Canceled')));
                 if(filtered.length === 0) { container.innerHTML = `<div class="text-center py-10 text-gray-400">No orders found.</div>`; return; }
                 filtered.forEach(o => {
@@ -130,10 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (items.length === 0) { grid.innerHTML = '<div class="col-span-4 text-center py-10 text-gray-400">No products found.</div>'; return; }
                 
                 items.forEach(p => {
-                    // [FIX] HEART ICON
                     const isFav = app.state.favorites.some(f => f.id === p.id);
                     const heartClass = isFav ? 'fa-solid text-red-500' : 'fa-regular text-gray-400';
-
                     grid.innerHTML += `
                         <div class="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-xl transition-all relative">
                             <button class="fav-btn absolute top-3 right-3 z-10 bg-white/80 p-2 rounded-full shadow hover:bg-white transition" data-id="${p.id}">
@@ -266,12 +263,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // TABS
                 if (t.classList.contains('purchase-tab')) app.nav.showPurchases(t.dataset.tab);
 
-                // [NEW] PROFILE SAVE
+                // PROFILE SAVE
                 if (t.classList.contains('btn-save-profile')) {
                     e.preventDefault();
                     fetch('/customer/profile', { 
                         method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
                         body: JSON.stringify({
                             name: document.getElementById('prof-name').value,
                             email: document.getElementById('prof-email').value,
@@ -288,12 +285,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (t.classList.contains('btn-submit-request')) {
                     e.preventDefault();
                     const desc = document.getElementById('request-description').value;
+                    const budget = document.getElementById('request-budget').value;
+                    const contact = document.getElementById('request-contact').value;
+
                     if(!desc.trim()) return alert('Please describe your arrangement.');
 
                     fetch('/customer/request', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                        body: JSON.stringify({ description: desc })
+                        body: JSON.stringify({ description: desc, budget: budget, contact_number: contact })
                     })
                     .then(res => res.json())
                     .then(data => {

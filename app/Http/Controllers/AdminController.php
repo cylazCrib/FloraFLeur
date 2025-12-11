@@ -3,145 +3,104 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Shop;    // <-- You already have this
-use App\Models\Product; // <-- ADD THIS LINE
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use App\Models\Shop;
+use App\Models\Product;
+use App\Models\User;
+use App\Models\Order;
 
 class AdminController extends Controller
 {
-    /**
-     * Show the main admin dashboard with dynamic data.
-     */
     public function dashboard()
     {
-        // 1. Get count of all shops with 'approved' status
-        $totalShops = Shop::where('status', 'approved')->count();
+        // 1. STATS (Case insensitive for safety)
+        $stats = [
+            'active_vendors' => Shop::whereIn('status', ['Active', 'active', 'approved', 'Approved'])->count(),
+            'pending_shops'  => Shop::whereIn('status', ['Pending', 'pending'])->count(),
+            'total_users'    => User::where('role', 'customer')->count(),
+            'total_products' => Product::count()
+        ];
 
-        // 2. Get count of all shops with 'pending' status
-        $newEntries = Shop::where('status', 'pending')->count();
+        // 2. LISTS
+        $pendingShops = Shop::with('user')->whereIn('status', ['Pending', 'pending'])->latest()->get();
+        
+        $activeShops = Shop::with('user')
+            ->whereIn('status', ['Active', 'active', 'approved', 'Approved', 'Suspended', 'suspended'])
+            ->latest()->get();
+        
+        $owners = Shop::with('user')
+            ->whereIn('status', ['Active', 'active', 'approved', 'Approved', 'Suspended', 'suspended'])
+            ->get();
 
-        // 3. Get count of all products in the database
-        // This will be 0 until we build the vendor-side product CRUD
-        $totalProducts = Product::count(); 
-
-        // Pass these 3 variables to the view
-        return view('admin.dashboard', [
-            'totalShops' => $totalShops,
-            'newEntries' => $newEntries,
-            'totalProducts' => $totalProducts
-        ]);
+        return view('admin.dashboard', compact('stats', 'pendingShops', 'activeShops', 'owners'));
     }
 
-    /**
-     * READ: Show the 'Manage Registrations' page.
-     */
-    public function registrations()
+    // [FIX] ROBUST ACTIVITY LOG
+    public function getOwnerActivity($id)
     {
-        // ... (your existing registrations method) ...
-        $pending_shops = Shop::where('status', 'pending')
-                                ->with('user')
-                                ->get();
-        return view('admin.registrations', [
-            'pending_shops' => $pending_shops
-        ]);
+        try {
+            $shop = Shop::findOrFail($id);
+            
+            // 1. Orders
+            $orders = Order::where('shop_id', $id)->latest()->take(5)->get()->map(fn($o) => [
+                'type' => 'order',
+                'text' => "Order #{$o->order_number} - ₱" . number_format($o->total_amount),
+                'date' => optional($o->created_at)->format('M d, H:i') ?? 'N/A',
+                'status' => $o->status
+            ]);
+
+            // 2. Products
+            $products = Product::where('shop_id', $id)->latest()->take(5)->get()->map(fn($p) => [
+                'type' => 'product',
+                'text' => "Added: {$p->name}",
+                'date' => optional($p->created_at)->format('M d, H:i') ?? 'N/A',
+                'status' => 'Qty: ' . $p->quantity
+            ]);
+
+            // 3. System Event (Ensures log is never empty)
+            $joined = collect([[
+                'type' => 'system',
+                'text' => "Shop Registered",
+                'date' => optional($shop->created_at)->format('M d, H:i') ?? 'N/A',
+                'status' => 'Success'
+            ]]);
+
+            $activity = $orders->merge($products)->merge($joined)->sortByDesc('date')->values();
+
+            return response()->json([
+                'shop' => $shop->name,
+                'owner' => optional($shop->user)->name ?? 'Unknown',
+                'activity' => $activity
+            ]);
+
+        } catch (\Exception $e) {
+            // Return JSON error instead of crashing
+            return response()->json(['error' => 'Server Error: ' . $e->getMessage()], 500);
+        }
     }
 
-    /**
-     * UPDATE: Approve a shop.
-     */
-    public function approveShop(Shop $shop)
+    public function approveShop($id)
     {
-        // 1. Update the shop's status
-        $shop->update(['status' => 'approved']);
-
-        // 2. CRITICAL FIX: Update the User's role to 'vendor'
-        // This gives them permission to log in to the Vendor Dashboard
-        $shop->user->update(['role' => 'vendor']);
-
-        // 3. Redirect back with success message
-        return redirect()->route('admin.registrations.index')
-            ->with('success', 'Shop approved! The user can now log in as a Vendor.');
+        $shop = Shop::findOrFail($id);
+        $shop->update(['status' => 'approved']); 
+        if($shop->user) $shop->user->update(['role' => 'vendor']);
+        return response()->json(['message' => 'Shop approved']);
     }
-    /**
-     * DELETE: Reject (and delete) a shop.
-     */
-    public function rejectShop(Shop $shop)
+
+    public function rejectShop($id)
     {
-        // ... (your existing rejectShop method) ...
+        $shop = Shop::findOrFail($id);
         $shop->delete();
-        return redirect()->route('admin.registrations.index')->with('success', 'Shop has been rejected.');
+        return response()->json(['message' => 'Shop rejected']);
     }
 
-    public function vendors()
+    public function toggleShopStatus($id)
     {
-        // Fetch all shops that are NOT pending (i.e., 'approved' or 'suspended')
-        $shops = Shop::where('status', '!=', 'pending')
-                        ->with('user') // Get the owner's info
-                        ->get();
-
-        // Send that data to our new view
-        return view('admin.vendors', [
-            'shops' => $shops
-        ]);
-    }
-
-    /**
-     * UPDATE: Toggle a shop's status between 'approved' and 'suspended'.
-     */
-    public function toggleShopStatus(Shop $shop)
-    {
-        // Check the current status and swap it
-        $newStatus = ($shop->status == 'approved') ? 'suspended' : 'approved';
-
+        $shop = Shop::findOrFail($id);
+        $isActive = in_array(strtolower($shop->status), ['active', 'approved']);
+        $newStatus = $isActive ? 'Suspended' : 'approved';
         $shop->update(['status' => $newStatus]);
-
-        // Send the user back to the vendors page with a success message
-        return redirect()->route('admin.vendors.index')->with('success', 'Shop status has been updated!');
+        return response()->json(['message' => "Shop marked as $newStatus"]);
     }
-
-    public function owners()
-{
-    // Fetch all shops that are NOT pending (i.e., approved or suspended)
-    // We'll need the user (owner) and product count (which we'll add later)
-    $shops = Shop::where('status', '!=', 'pending')
-                    ->with('user')
-                    // ->withCount('products') // We can add this later
-                    ->get();
-
-    return view('admin.owners', [
-        'shops' => $shops
-    ]);
-}
-
-/**
- * UPDATE: Handle the 'Send Notification' form.
- */
-public function notifyOwners(Request $request)
-{
-    // Validate the form data
-    $request->validate([
-        'subject' => 'required|string|max:255',
-        'message' => 'required|string|min:10',
-    ]);
-
-    // ---
-    // In the future, this is where you would dispatch a Job 
-    // or a Mailable to email all your shop owners.
-    // For now, we'll just pretend it worked.
-    // ---
-
-    return redirect()->route('admin.owners.index')->with('success', 'Notification sent to all owners!');
-}
-
-public function gmail()
-{
-    return view('admin.gmail');
-}
-
-/**
- * READ: Show the 'Settings' page.
- */
-public function settings()
-{
-    return view('admin.settings');
-}
 }

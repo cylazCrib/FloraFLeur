@@ -17,17 +17,19 @@ class CustomerController extends Controller
     public function dashboard()
     {
         $products = Product::latest()->get();
+        
+        // [FIX] Eager load items to prevent 'undefined' in JS
         $orders = Order::with('items')->where('user_id', Auth::id())->latest()->get();
-        // [FIX] Fetch Requests
+        
         $requests = CustomRequest::where('user_id', Auth::id())->latest()->get();
 
         return view('customer.dashboard', compact('products', 'orders', 'requests'));
     }
 
-    // [FIX] Profile Update Method
     public function updateProfile(Request $request)
     {
-        $user = Auth::user();
+        $user = Auth::user(); // Get the User Model Instance
+        
         $request->validate([
             'name' => 'required',
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
@@ -35,6 +37,7 @@ class CustomerController extends Controller
             'address' => 'nullable'
         ]);
 
+        // [FIX] Call update on the User model, not "this"
         $user->update($request->only(['name', 'email', 'phone', 'address']));
 
         return response()->json(['message' => 'Profile updated successfully!']);
@@ -45,41 +48,60 @@ class CustomerController extends Controller
         $request->validate(['items' => 'required|array', 'payment_method' => 'required']);
         $user = Auth::user();
         
+        $cartItems = $request->items;
+        $ordersByShop = [];
+
+        // Logic to group orders by Shop
+        foreach ($cartItems as $item) {
+            $product = Product::find($item['id']);
+            if (!$product) continue;
+
+            $shopId = $product->shop_id;
+            
+            if (!isset($ordersByShop[$shopId])) {
+                $ordersByShop[$shopId] = ['shop_id' => $shopId, 'items' => [], 'total' => 0];
+            }
+
+            $cleanPrice = (float) str_replace([',', '₱', ' '], '', $product->price);
+            $qty = (int) $item['qty'];
+
+            $ordersByShop[$shopId]['items'][] = [
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'price' => $cleanPrice,
+                'qty' => $qty
+            ];
+            
+            $ordersByShop[$shopId]['total'] += $cleanPrice * $qty;
+        }
+
         DB::beginTransaction();
         try {
-            // Create Order
-            $order = Order::create([
-                'shop_id' => 1, // Default or logic to find shop
-                'user_id' => $user->id,
-                'order_number' => 'ORD-' . strtoupper(uniqid()),
-                'customer_name' => $user->name,
-                'customer_phone' => $user->phone ?? 'N/A',
-                'customer_email' => $user->email,
-                'delivery_address' => $user->address ?? 'Default',
-                'delivery_date' => now()->addDays(3),
-                'total_amount' => 0,
-                'status' => 'Pending',
-                'payment_method' => $request->payment_method
-            ]);
+            foreach ($ordersByShop as $shopData) {
+                $order = Order::create([
+                    'shop_id' => $shopData['shop_id'],
+                    'user_id' => $user->id,
+                    'order_number' => 'ORD-' . strtoupper(uniqid()),
+                    'customer_name' => $user->name,
+                    'customer_phone' => $user->phone ?? 'N/A',
+                    'customer_email' => $user->email,
+                    'delivery_address' => $user->address ?? 'Default Address',
+                    'delivery_date' => now()->addDays(3),
+                    'total_amount' => $shopData['total'],
+                    'status' => 'Pending',
+                    'payment_method' => $request->payment_method
+                ]);
 
-            $total = 0;
-            foreach ($request->items as $item) {
-                $p = Product::find($item['id']);
-                if ($p) {
-                    $price = (float) $p->price;
-                    $qty = (int) $item['qty'];
-                    $total += $price * $qty;
-
+                foreach ($shopData['items'] as $itemData) {
                     OrderItem::create([
                         'order_id' => $order->id,
-                        'product_id' => $p->id,
-                        'product_name' => $p->name,
-                        'quantity' => $qty,
-                        'price' => $price,
+                        'product_id' => $itemData['product_id'],
+                        'product_name' => $itemData['product_name'],
+                        'quantity' => $itemData['qty'],
+                        'price' => $itemData['price'],
                     ]);
                 }
             }
-            $order->update(['total_amount' => $total]);
             
             DB::commit();
             return response()->json(['message' => 'Order placed successfully!']);

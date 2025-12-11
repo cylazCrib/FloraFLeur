@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const id = t.dataset.id;
                     const status = document.getElementById(`req-status-${id}`).value;
                     
-                    if(confirm(`Update status to "${status}"?`)) {
+                    if(confirm(`Update request status to "${status}"?`)) {
                         fetch(`/vendor/requests/${id}/status`, {
                             method: 'PATCH',
                             headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken},

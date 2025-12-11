@@ -12,8 +12,8 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\InventoryItem;
 use App\Models\OrderItem;
-use App\Models\Staff; // <--- NEW MODEL
 use App\Models\CustomRequest;
+use App\Models\Staff;
 
 class VendorController extends Controller
 {
@@ -24,7 +24,7 @@ class VendorController extends Controller
 
         if (!$shop) return view('vendor.dashboard');
 
-        // 1. STATS
+        // Stats
         $totalSales = Order::where('shop_id', $shop->id)->whereIn('status', ['Delivered', 'Completed'])->sum('total_amount');
         $totalOrders = Order::where('shop_id', $shop->id)->count();
         $inventoryCount = InventoryItem::where('shop_id', $shop->id)->count();
@@ -32,7 +32,7 @@ class VendorController extends Controller
         $pendingOrders = Order::where('shop_id', $shop->id)->where('status', 'Pending')->count();
         $deliveredOrders = Order::where('shop_id', $shop->id)->whereIn('status', ['Delivered', 'Completed'])->count();
 
-        // 2. DATA LISTS
+        // Lists
         $recentOrders = Order::with('items')->where('shop_id', $shop->id)->latest()->take(5)->get();
         $orders = Order::with(['items', 'user'])->where('shop_id', $shop->id)->latest()->get();
         $products = $shop->products()->latest()->get();
@@ -41,13 +41,19 @@ class VendorController extends Controller
         $items = $inventory->where('type', 'item');
         $flowers = $inventory->where('type', 'flower');
         
-        // [FIX] Fetch from Staff table instead of Users
         $staff = Staff::where('shop_id', $shop->id)->latest()->get();
-        
-        // [FIX] Fetch Drivers from Staff table (where role is Driver)
         $drivers = Staff::where('shop_id', $shop->id)->where('role', 'Driver')->get();
 
-        $customRequests = CustomRequest::with('user')->latest()->get();
+        // [CRITICAL FIX] FILTER LOGIC:
+        // 1. Show requests that are 'Pending' AND have NO shop_id (Available to everyone)
+        // 2. OR Show requests that have MY shop_id (Claimed by me)
+        $customRequests = CustomRequest::with('user')
+            ->where(function($query) {
+                $query->where('status', 'Pending')->whereNull('shop_id');
+            })
+            ->orWhere('shop_id', $shop->id)
+            ->latest()
+            ->get();
 
         return view('vendor.dashboard', compact(
             'totalSales', 'totalOrders', 'pendingOrders', 'deliveredOrders',
@@ -56,67 +62,57 @@ class VendorController extends Controller
         ));
     }
 
-    // --- STAFF ACTIONS (UPDATED) ---
+    // [CRITICAL FIX] LOCKING LOGIC
+    public function updateRequestStatus(Request $request, $id) {
+        $customReq = CustomRequest::findOrFail($id);
+        $shopId = Auth::user()->shop->id;
 
+        // If the request is currently Unclaimed (Pending) and we are changing it
+        if ($customReq->shop_id === null) {
+            // Lock it to THIS shop
+            $customReq->shop_id = $shopId;
+        } 
+        // If it's already claimed, ensure only the OWNER can update it
+        else if ($customReq->shop_id !== $shopId) {
+            return response()->json(['message' => 'Error: This request is handled by another vendor.'], 403);
+        }
+
+        $customReq->status = $request->status;
+        $customReq->save();
+
+        return response()->json(['message' => 'Request updated']);
+    }
+
+    // --- OTHER ACTIONS (Standard) ---
     public function storeStaff(Request $request) {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email',
-            'role' => 'required',
-            'phone' => 'required'
-        ]);
-
-        // Fix: Use except to remove ID and avoid "Unknown column" error
+        $request->validate(['name'=>'required', 'email'=>'required', 'role'=>'required', 'phone'=>'required']);
         $data = $request->except(['staff_id']);
-        
-        // Ensure shop_id is set
         $data['shop_id'] = Auth::user()->shop->id;
         $data['status'] = $data['status'] ?? 'Active';
 
-        if($request->staff_id) {
-            // Update existing Staff record
-            $staff = Staff::where('id', $request->staff_id)->where('shop_id', Auth::user()->shop->id)->firstOrFail();
-            $staff->update($data);
-        } else {
-            // Create new Staff record
-            Staff::create($data);
-        }
-        return response()->json(['message' => 'Staff saved successfully']);
+        if($request->staff_id) { Staff::where('id', $request->staff_id)->update($data); }
+        else { Staff::create($data); }
+        return response()->json(['message' => 'Staff saved']);
     }
+    public function destroyStaff($id) { Staff::destroy($id); return response()->json(['message' => 'Removed']); }
 
-    public function destroyStaff($id) {
-        Staff::where('id', $id)->where('shop_id', Auth::user()->shop->id)->delete();
-        return response()->json(['message' => 'Staff removed']);
-    }
-
-    // --- INVENTORY ACTIONS ---
     public function storeInventory(Request $request) {
         $data = $request->except(['item_id']);
-        if($request->item_id) {
-            InventoryItem::where('id', $request->item_id)->where('shop_id', Auth::user()->shop->id)->update($data);
-        } else {
-            Auth::user()->shop->inventory()->create($data);
-        }
+        if($request->item_id) { InventoryItem::where('id', $request->item_id)->update($data); } 
+        else { Auth::user()->shop->inventory()->create($data); }
         return response()->json(['message' => 'Inventory saved']);
     }
-
-    public function destroyInventory($id) {
-        InventoryItem::destroy($id);
-        return response()->json(['message' => 'Item removed']);
-    }
-
-    // --- PRODUCT ACTIONS ---
+    public function destroyInventory($id) { InventoryItem::destroy($id); return response()->json(['message' => 'Item removed']); }
+    
     public function storeProduct(Request $request) {
         $data = $request->except(['product_id', 'image']);
         if($request->hasFile('image')) $data['image'] = $request->file('image')->store('products', 'public');
-        
         if($request->product_id) { Product::find($request->product_id)->update($data); }
         else { Auth::user()->shop->products()->create($data); }
         return response()->json(['message' => 'Product saved']);
     }
     public function destroyProduct($id) { Product::destroy($id); return response()->json(['message' => 'Deleted']); }
-
-    // --- ORDER ACTIONS ---
+    
     public function updateOrderStatus(Request $request, Order $order) {
         $order->update(['status' => $request->status]);
         return response()->json(['message' => 'Status updated']);
@@ -134,11 +130,5 @@ class VendorController extends Controller
         ]);
         OrderItem::create(['order_id' => $order->id, 'product_id' => 0, 'product_name' => $request->product_name, 'quantity' => 1, 'price' => $request->total_amount]);
         return response()->json(['message' => 'Order created']);
-    }
-    
-    // --- CUSTOM REQUEST ACTIONS ---
-    public function updateRequestStatus(Request $request, $id) {
-        CustomRequest::where('id', $id)->update(['status' => $request->status]);
-        return response()->json(['message' => 'Request updated']);
     }
 }
