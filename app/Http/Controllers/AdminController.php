@@ -14,7 +14,7 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
-        // 1. STATS (Case insensitive for safety)
+        // 1. STATS (Case insensitive checks)
         $stats = [
             'active_vendors' => Shop::whereIn('status', ['Active', 'active', 'approved', 'Approved'])->count(),
             'pending_shops'  => Shop::whereIn('status', ['Pending', 'pending'])->count(),
@@ -23,12 +23,19 @@ class AdminController extends Controller
         ];
 
         // 2. LISTS
-        $pendingShops = Shop::with('user')->whereIn('status', ['Pending', 'pending'])->latest()->get();
+        // Catches 'pending' and 'Pending'
+        $pendingShops = Shop::with('user')
+            ->whereIn('status', ['Pending', 'pending'])
+            ->latest()
+            ->get();
         
+        // Catches all active variations
         $activeShops = Shop::with('user')
             ->whereIn('status', ['Active', 'active', 'approved', 'Approved', 'Suspended', 'suspended'])
-            ->latest()->get();
+            ->latest()
+            ->get();
         
+        // Owners for Activity Log
         $owners = Shop::with('user')
             ->whereIn('status', ['Active', 'active', 'approved', 'Approved', 'Suspended', 'suspended'])
             ->get();
@@ -36,13 +43,14 @@ class AdminController extends Controller
         return view('admin.dashboard', compact('stats', 'pendingShops', 'activeShops', 'owners'));
     }
 
-    // [FIX] ROBUST ACTIVITY LOG
+    // --- AJAX ACTIONS ---
+
     public function getOwnerActivity($id)
     {
         try {
             $shop = Shop::findOrFail($id);
             
-            // 1. Orders
+            // Safe Data Retrieval using optional() to prevent crashes
             $orders = Order::where('shop_id', $id)->latest()->take(5)->get()->map(fn($o) => [
                 'type' => 'order',
                 'text' => "Order #{$o->order_number} - ₱" . number_format($o->total_amount),
@@ -50,7 +58,6 @@ class AdminController extends Controller
                 'status' => $o->status
             ]);
 
-            // 2. Products
             $products = Product::where('shop_id', $id)->latest()->take(5)->get()->map(fn($p) => [
                 'type' => 'product',
                 'text' => "Added: {$p->name}",
@@ -58,7 +65,7 @@ class AdminController extends Controller
                 'status' => 'Qty: ' . $p->quantity
             ]);
 
-            // 3. System Event (Ensures log is never empty)
+            // Always add a "Joined" event so list is never empty
             $joined = collect([[
                 'type' => 'system',
                 'text' => "Shop Registered",
@@ -75,7 +82,7 @@ class AdminController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            // Return JSON error instead of crashing
+            // Return JSON error, don't crash with HTML
             return response()->json(['error' => 'Server Error: ' . $e->getMessage()], 500);
         }
     }

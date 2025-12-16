@@ -6,7 +6,9 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\RegisteredShopController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\VendorController;
-use App\Http\Controllers\CustomerController; // <--- This was likely missing or typoed
+use App\Http\Controllers\CustomerController;
+// [IMPORTANT] Add this new controller
+use App\Http\Controllers\VendorProductController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -24,7 +26,6 @@ Route::post('/register-shop', [RegisteredShopController::class, 'store'])->name(
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
-    // [CRITICAL] This route is required for the Activity Log to work!
     Route::get('/owners/{id}/activity', [AdminController::class, 'getOwnerActivity'])->name('owners.activity');
 
     Route::get('/registrations', [AdminController::class, 'registrations'])->name('registrations.index');
@@ -33,7 +34,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/vendors', [AdminController::class, 'vendors'])->name('vendors.index');
     Route::patch('/vendors/{shop}/toggle', [AdminController::class, 'toggleShopStatus'])->name('vendors.toggle');
     
-    // These are for the other tabs
     Route::get('/owners', [AdminController::class, 'owners'])->name('owners.index'); 
     Route::post('/owners/notify', [AdminController::class, 'notifyOwners'])->name('owners.notify');
     Route::get('/gmail', [AdminController::class, 'gmail'])->name('gmail.index');
@@ -45,10 +45,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function () {
     Route::get('/dashboard', [VendorController::class, 'dashboard'])->name('dashboard');
 
-    // Products
-    Route::post('/products', [VendorController::class, 'storeProduct']);
-    Route::post('/products/{id}/update', [VendorController::class, 'storeProduct']);
-    Route::delete('/products/{id}', [VendorController::class, 'destroyProduct']);
+    // --- [FIXED] PRODUCT ROUTES (Using VendorProductController) ---
+    // Since the group name is 'vendor.', these names become 'vendor.products.store', etc.
+    Route::post('/products', [VendorProductController::class, 'store'])->name('products.store');
+    Route::put('/products/{product}', [VendorProductController::class, 'update'])->name('products.update');
+    Route::delete('/products/{product}', [VendorProductController::class, 'destroy'])->name('products.destroy');
 
     // Inventory
     Route::post('/inventory', [VendorController::class, 'storeInventory']);
@@ -65,6 +66,7 @@ Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function (
     Route::patch('/orders/{order}/status', [VendorController::class, 'updateOrderStatus']);
     Route::patch('/orders/{order}/assign', [VendorController::class, 'assignDriver']);
     Route::patch('/requests/{id}/status', [VendorController::class, 'updateRequestStatus']);
+    Route::get('/sales/export', [VendorController::class, 'exportSales'])->name('sales.export');
 });
 
 // 5. Customer Routes

@@ -16,14 +16,28 @@ class CustomerController extends Controller
 {
     public function dashboard()
     {
+        // 1. Fetch products (Latest first)
         $products = Product::latest()->get();
         
-        // [FIX] Eager load items to prevent 'undefined' in JS
+        // 2. Eager load items for orders to prevent JS errors
         $orders = Order::with('items')->where('user_id', Auth::id())->latest()->get();
         
+        // 3. Fetch custom requests
         $requests = CustomRequest::where('user_id', Auth::id())->latest()->get();
 
-        return view('customer.dashboard', compact('products', 'orders', 'requests'));
+        // 4. [NEW] Define Occasions for the Filter
+        $occasions = [
+            'Birthday',
+            'Anniversary',
+            'Valentines',
+            'Mothers Day',
+            'Graduation',
+            'Funeral',
+            'Just Because'
+        ];
+
+        // 5. Pass everything to the view
+        return view('customer.dashboard', compact('products', 'orders', 'requests', 'occasions'));
     }
 
     public function updateProfile(Request $request)
@@ -37,7 +51,6 @@ class CustomerController extends Controller
             'address' => 'nullable'
         ]);
 
-        // [FIX] Call update on the User model, not "this"
         $user->update($request->only(['name', 'email', 'phone', 'address']));
 
         return response()->json(['message' => 'Profile updated successfully!']);

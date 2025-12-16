@@ -14,15 +14,13 @@
         'occasion' => $p->occasion ?? 'all'
     ]);
     
-    // 2. Prepare Orders (Fixing 'undefined' issues)
+    // 2. Prepare Orders
     $ordersData = $orders->map(fn($o) => [
         'id' => $o->order_number,
         'date' => $o->created_at->format('M d, Y'),
         'status' => $o->status,
         'total' => $o->total_amount,
-        // [NEW] Pass the driver name
         'driver' => $o->driver_name ?? null, 
-        // [FIX] Map 'product_name' to 'name' for JS
         'items' => $o->items->map(fn($i) => [
             'name' => $i->product_name, 
             'qty' => $i->quantity,
@@ -40,6 +38,7 @@
     ]) : [];
 @endphp
 
+{{-- DATA PAYLOADS (The Bridge between PHP and JS) --}}
 <div id="db-products-payload" data-products="{{ json_encode($productsData) }}" class="hidden"></div>
 <div id="db-orders-payload" data-orders="{{ json_encode($ordersData) }}" class="hidden"></div>
 <div id="db-requests-payload" data-requests="{{ json_encode($requestsData) }}" class="hidden"></div>
@@ -62,12 +61,17 @@
                 <div class="hidden md:flex items-center space-x-10 text-sm font-medium tracking-wider">
                     <button class="nav-link hover:text-gray-300 uppercase bg-transparent border-none cursor-pointer" data-target="view-dashboard">HOME</button>
                     
+                    {{-- DYNAMIC OCCASIONS DROPDOWN --}}
                     <div class="relative group h-20 flex items-center cursor-pointer">
                         <span class="hover:text-gray-300 flex items-center gap-1 uppercase">Occasions <i class="fa-solid fa-chevron-down text-[10px]"></i></span>
                         <div class="absolute top-[calc(100%-0.5rem)] left-0 w-48 bg-[#4A4A3A] border-t border-gray-500 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                            <button class="filter-btn block w-full text-left px-6 py-3 text-sm hover:bg-[#5c5c48] uppercase bg-transparent border-none cursor-pointer text-white" data-type="occasion" data-value="valentines">Valentine's</button>
-                            <button class="filter-btn block w-full text-left px-6 py-3 text-sm hover:bg-[#5c5c48] uppercase bg-transparent border-none cursor-pointer text-white" data-type="occasion" data-value="wedding">Wedding</button>
-                            <button class="filter-btn block w-full text-left px-6 py-3 text-sm hover:bg-[#5c5c48] uppercase bg-transparent border-none cursor-pointer text-white" data-type="occasion" data-value="birthday">Birthday</button>
+                            @foreach($occasions as $occ)
+                                <button class="filter-btn block w-full text-left px-6 py-3 text-sm hover:bg-[#5c5c48] uppercase bg-transparent border-none cursor-pointer text-white" 
+                                    data-type="occasion" 
+                                    data-value="{{ $occ }}">
+                                    {{ $occ }}
+                                </button>
+                            @endforeach
                         </div>
                     </div>
 
@@ -96,6 +100,7 @@
             </nav>
         </header>
 
+        {{-- DASHBOARD HOME --}}
         <main id="view-dashboard" class="view-section active flex-grow flex flex-col justify-center px-4 lg:px-8 py-12 w-full max-w-[1400px] mx-auto text-white">
             <div class="text-center mb-14 mt-4">
                 <h1 class="text-3xl md:text-4xl lg:text-5xl font-normal leading-tight drop-shadow-lg">
@@ -120,14 +125,14 @@
                 </div>
 
                 <div class="filter-btn group relative aspect-[3/4] overflow-hidden rounded-xl shadow-2xl cursor-pointer" data-type="category" data-value="basket">
-                    <img src="{{ asset('images/flower basket.jpg') }}" onerror="this.src='https://placehold.co/600x800/86A873/white?text=Basket'" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <img src="{{ asset('images/flower basket.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                     <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
                         <span class="text-2xl font-rosarivo tracking-wider text-white drop-shadow-md">Baskets</span>
                     </div>
                 </div>
 
                 <div class="filter-btn group relative aspect-[3/4] overflow-hidden rounded-xl shadow-2xl cursor-pointer mt-0 lg:mt-8" data-type="category" data-value="box">
-                    <img src="{{ asset('images/flower boxes.jpg') }}" onerror="this.src='https://placehold.co/600x800/4A4A3A/white?text=Box'" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <img src="{{ asset('images/flower boxes.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                     <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
                         <span class="text-2xl font-rosarivo tracking-wider text-white drop-shadow-md">Flower Boxes</span>
                     </div>
@@ -136,11 +141,15 @@
             </div>
         </main>
 
+        {{-- PRODUCTS GRID --}}
         <main id="view-products" class="view-section hidden flex-grow w-full max-w-[1400px] mx-auto px-4 py-12 pt-28">
              <h2 id="product-category-title" class="font-rosarivo text-4xl text-[#4A4A3A] mb-8 pl-4 border-l-4 border-[#86A873] bg-white/80 backdrop-blur-sm inline-block pr-6 py-2 rounded-r-lg text-gray-800">All Collection</h2>
-             <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+             <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {{-- JS WILL INJECT PRODUCTS HERE --}}
+             </div>
         </main>
 
+        {{-- CART VIEW --}}
         <main id="view-cart" class="view-section hidden flex-grow w-full max-w-5xl mx-auto px-4 py-12 pt-28 text-gray-800">
             <h2 class="font-rosarivo text-4xl text-white mb-8">Your Cart</h2>
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -152,6 +161,7 @@
             </div>
         </main>
 
+        {{-- PURCHASES VIEW --}}
         <main id="view-purchases" class="view-section hidden flex-grow w-full max-w-5xl mx-auto px-4 py-12 pt-28 text-gray-800">
              <h2 class="font-rosarivo text-4xl text-white mb-6">My Purchases</h2>
              <div class="flex border-b border-gray-300 mb-8 bg-white/80 backdrop-blur-sm rounded-t-lg w-fit">
@@ -162,6 +172,7 @@
              <div id="purchases-list" class="space-y-4"></div>
         </main>
         
+        {{-- ACCOUNT VIEW --}}
         <main id="view-account" class="view-section hidden flex-grow w-full max-w-4xl mx-auto px-4 py-12 pt-28 text-[#4A4A3A]">
             <div class="bg-white p-10 rounded-xl shadow-xl border border-gray-200">
                 <div class="flex items-center gap-6 pb-8 border-b">
@@ -180,6 +191,7 @@
             </div>
         </main>
 
+        {{-- REQUEST VIEW --}}
         <main id="view-request" class="view-section hidden flex-grow w-full max-w-2xl mx-auto px-4 py-12 pt-28 text-white">
             <h1 class="text-4xl md:text-5xl font-bold mb-10 text-center">Request Arrangement</h1>
             <div class="bg-white/10 border border-page-border-trans rounded-lg shadow-xl p-8 backdrop-blur-md">
@@ -200,6 +212,7 @@
             </div>
         </main>
 
+        {{-- CHECKOUT VIEW --}}
         <main id="view-checkout" class="view-section hidden flex-grow w-full max-w-6xl mx-auto px-4 py-12 pt-28 text-[#4A4A3A]">
             <h2 class="font-rosarivo text-4xl text-center text-white mb-10">Checkout</h2>
             <div class="flex flex-col gap-8">
@@ -222,6 +235,7 @@
     </div>
 </div>
 
+{{-- MODALS --}}
 <div id="product-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.6);">
     <div class="relative w-full max-w-4xl bg-[#F5F5F0] rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden">
         <button class="modal-close-btn absolute top-4 right-4 text-gray-500 hover:text-red-500 z-50 p-2 text-2xl font-bold">&times;</button>
@@ -251,5 +265,49 @@
         <button class="btn-back-main w-full bg-[#4A4A3A] text-white font-bold py-3 rounded-lg">Back to Dashboard</button>
     </div>
 </div>
+
+{{-- RECEIPT MODAL --}}
+<div id="receipt-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.6);">
+    {{-- Added 'text-black' here to force all text inside to be visible --}}
+    <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden relative font-mono text-sm text-black">
+        <button class="modal-close-btn absolute top-2 right-2 text-gray-500 hover:text-red-500 z-50 p-2 text-xl font-bold">&times;</button>
+        
+        <div class="p-8 bg-white" id="receipt-content">
+            <div class="text-center mb-6 border-b border-dashed border-gray-400 pb-4">
+                <h2 class="font-bold text-xl uppercase tracking-widest text-black">Flora Fleur</h2>
+                <p class="text-xs text-black">Official Receipt</p>
+            </div>
+            
+            <div class="mb-4 text-black">
+                <div class="flex justify-between"><span>Order #:</span><span id="rec-id" class="font-bold"></span></div>
+                <div class="flex justify-between"><span>Date:</span><span id="rec-date"></span></div>
+                <div class="flex justify-between"><span>Customer:</span><span id="rec-name">{{ Auth::user()->name }}</span></div>
+            </div>
+
+            <div class="border-t border-b border-dashed border-gray-400 py-4 mb-4 text-black">
+                <table class="w-full text-left">
+                    <thead><tr><th class="pb-2 text-black">Item</th><th class="text-right pb-2 text-black">Amt</th></tr></thead>
+                    <tbody id="rec-items"></tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-between font-bold text-lg mb-6 text-black">
+                <span>TOTAL</span>
+                <span id="rec-total"></span>
+            </div>
+
+            <div class="text-center text-xs text-black mt-4">
+                <p>Thank you for shopping with us!</p>
+                <p>Please come again.</p>
+            </div>
+        </div>
+        
+        <div class="bg-gray-200 p-4 text-center border-t border-gray-300">
+            <button class="bg-[#4A4A3A] text-white px-6 py-2 rounded text-xs font-bold uppercase hover:bg-gray-800 shadow-md" onclick="window.print()">Print Receipt</button>
+        </div>
+    </div>
+</div>
+{{-- SCRIPT LINK --}}
+<script src="{{ asset('js/customer.js') }}"></script>
 
 @endsection

@@ -24,15 +24,19 @@ class VendorController extends Controller
 
         if (!$shop) return view('vendor.dashboard');
 
-        // Stats
-        $totalSales = Order::where('shop_id', $shop->id)->whereIn('status', ['Delivered', 'Completed'])->sum('total_amount');
+        // --- 1. CALCULATE TOTAL SALES (Orders + Requests) ---
+        $orderSales = Order::where('shop_id', $shop->id)->whereIn('status', ['Delivered', 'Completed'])->sum('total_amount');
+        $requestSales = CustomRequest::where('shop_id', $shop->id)->whereIn('status', ['Delivered', 'Completed'])->sum('budget');
+        $totalSales = $orderSales + $requestSales;
+
+        // --- 2. OTHER STATS ---
         $totalOrders = Order::where('shop_id', $shop->id)->count();
         $inventoryCount = InventoryItem::where('shop_id', $shop->id)->count();
         $lowStockCount = InventoryItem::where('shop_id', $shop->id)->where('quantity', '<=', 5)->count();
         $pendingOrders = Order::where('shop_id', $shop->id)->where('status', 'Pending')->count();
         $deliveredOrders = Order::where('shop_id', $shop->id)->whereIn('status', ['Delivered', 'Completed'])->count();
 
-        // Lists
+        // --- 3. FETCH LISTS ---
         $recentOrders = Order::with('items')->where('shop_id', $shop->id)->latest()->take(5)->get();
         $orders = Order::with(['items', 'user'])->where('shop_id', $shop->id)->latest()->get();
         $products = $shop->products()->latest()->get();
@@ -44,9 +48,6 @@ class VendorController extends Controller
         $staff = Staff::where('shop_id', $shop->id)->latest()->get();
         $drivers = Staff::where('shop_id', $shop->id)->where('role', 'Driver')->get();
 
-        // [CRITICAL FIX] FILTER LOGIC:
-        // 1. Show requests that are 'Pending' AND have NO shop_id (Available to everyone)
-        // 2. OR Show requests that have MY shop_id (Claimed by me)
         $customRequests = CustomRequest::with('user')
             ->where(function($query) {
                 $query->where('status', 'Pending')->whereNull('shop_id');
@@ -62,18 +63,80 @@ class VendorController extends Controller
         ));
     }
 
-    // [CRITICAL FIX] LOCKING LOGIC
+    // --- [NEW] EXPORT SALES FUNCTION ---
+    public function exportSales()
+    {
+        $shop = Auth::user()->shop;
+        if (!$shop) return redirect()->back();
+
+        $filename = "sales-report-" . date('Y-m-d') . ".csv";
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        // 1. Get Completed Orders
+        $orders = Order::where('shop_id', $shop->id)
+            ->whereIn('status', ['Delivered', 'Completed'])
+            ->get();
+
+        // 2. Get Completed Requests
+        $requests = CustomRequest::where('shop_id', $shop->id)
+            ->whereIn('status', ['Delivered', 'Completed'])
+            ->get();
+
+        $callback = function() use ($orders, $requests) {
+            $file = fopen('php://output', 'w');
+
+            // CSV Header Row
+            fputcsv($file, ['Date', 'Type', 'ID', 'Customer', 'Items/Description', 'Amount', 'Status']);
+
+            // Rows for Orders
+            foreach ($orders as $o) {
+                $items = $o->items->map(fn($i) => "{$i->quantity}x {$i->product_name}")->join(', ');
+                fputcsv($file, [
+                    $o->created_at->format('Y-m-d'),
+                    'Order',
+                    $o->order_number,
+                    $o->customer_name,
+                    $items,
+                    $o->total_amount,
+                    $o->status
+                ]);
+            }
+
+            // Rows for Requests
+            foreach ($requests as $r) {
+                fputcsv($file, [
+                    $r->created_at->format('Y-m-d'),
+                    'Request',
+                    'REQ-' . $r->id,
+                    $r->user->name ?? 'Guest',
+                    $r->description,
+                    $r->budget,
+                    $r->status
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    // --- EXISTING FUNCTIONS ---
+
     public function updateRequestStatus(Request $request, $id) {
         $customReq = CustomRequest::findOrFail($id);
         $shopId = Auth::user()->shop->id;
 
-        // If the request is currently Unclaimed (Pending) and we are changing it
         if ($customReq->shop_id === null) {
-            // Lock it to THIS shop
             $customReq->shop_id = $shopId;
-        } 
-        // If it's already claimed, ensure only the OWNER can update it
-        else if ($customReq->shop_id !== $shopId) {
+        } else if ($customReq->shop_id !== $shopId) {
             return response()->json(['message' => 'Error: This request is handled by another vendor.'], 403);
         }
 
@@ -83,7 +146,6 @@ class VendorController extends Controller
         return response()->json(['message' => 'Request updated']);
     }
 
-    // --- OTHER ACTIONS (Standard) ---
     public function storeStaff(Request $request) {
         $request->validate(['name'=>'required', 'email'=>'required', 'role'=>'required', 'phone'=>'required']);
         $data = $request->except(['staff_id']);

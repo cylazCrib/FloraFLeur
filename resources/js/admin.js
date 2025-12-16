@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
         }
 
-       // View Activity
+        // View Activity
         if (t.closest('.view-activity-btn')) {
             const id = t.closest('.view-activity-btn').dataset.id;
             const modal = document.getElementById('activity-modal');
@@ -37,35 +37,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             fetch(`/admin/owners/${id}/activity`)
                 .then(res => {
-                    if (!res.ok) {
-                        // Throw specific error with status code
-                        throw new Error(`Status ${res.status}: ${res.statusText}`);
-                    }
+                    if (!res.ok) throw new Error("Server Error");
                     return res.json();
                 })
                 .then(data => {
                     if(data.error) {
-                        list.innerHTML = `<p class="text-center p-4 text-red-500">${data.message}</p>`;
+                        list.innerHTML = `<p class="text-center p-4 text-red-500">${data.error}</p>`;
                         return;
                     }
                     title.innerText = data.shop + ' (' + data.owner + ')';
-                    
-                    if (!data.activity || data.activity.length === 0) {
-                        list.innerHTML = '<p class="text-center p-4 text-gray-500">No recent activity.</p>';
-                    } else {
-                        list.innerHTML = data.activity.map(a => `
-                            <div style="padding:10px; border-bottom:1px solid #eee; display:flex; gap:10px;">
-                                <div><strong>${a.type ? a.type.toUpperCase() : 'INFO'}</strong></div>
-                                <div>${a.text} <br><small style="color:#888">${a.date}</small></div>
-                            </div>
-                        `).join('');
-                    }
+                    if (!data.activity || data.activity.length === 0) list.innerHTML = '<p class="text-center p-4 text-gray-500">No recent activity.</p>';
+                    else list.innerHTML = data.activity.map(a => `
+                        <div style="padding:10px; border-bottom:1px solid #eee; display:flex; gap:10px;">
+                            <div><strong>${a.type ? a.type.toUpperCase() : 'INFO'}</strong></div>
+                            <div>${a.text} <br><small style="color:#888">${a.date}</small></div>
+                        </div>`).join('');
                 })
                 .catch(err => {
-                    console.error("Fetch Failed:", err);
-                    list.innerHTML = `<p class="text-center p-4 text-red-500">Failed to load: ${err.message}</p>`;
+                    console.error(err);
+                    list.innerHTML = '<p class="text-center p-4 text-red-500">Failed to load logs. Check server logs.</p>';
                 });
         }
+
         // View Details
         if (t.closest('.view-details-btn')) {
             const data = JSON.parse(t.closest('.view-details-btn').dataset.json);

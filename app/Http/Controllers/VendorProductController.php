@@ -10,107 +10,126 @@ use Illuminate\Support\Facades\Log;
 
 class VendorProductController extends Controller
 {
+    // Define the list of occasions here so we can use it in both create and edit
+    private $occasionsList = [
+        'Birthday',
+        'Anniversary',
+        'Valentines',
+        'Mothers Day',
+        'Graduation',
+        'Funeral',
+        'Just Because'
+    ];
+
     /**
      * READ: Show the products page.
      */
     public function index()
     {
-        // Get the logged-in vendor's shop
         $shop = Auth::user()->shop;
 
         if (!$shop) {
-            return redirect()->route('vendor.dashboard')->with('error', 'Shop not found. Please contact support.');
+            return redirect()->route('vendor.dashboard')->with('error', 'Shop not found.');
         }
 
-        // Get products for this shop, newest first
         $products = $shop->products()->latest()->get();
 
-        return view('vendor.products', compact('products'));
+        // Pass the list to the view
+        $occasions = $this->occasionsList;
+
+        return view('vendor.products', compact('products', 'occasions'));
     }
 
     /**
      * CREATE: Save a new product.
      */
     public function store(Request $request)
-{
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'description' => 'required|string',
-        'price' => 'required|numeric|min:0',
-        'category' => 'required|string|in:bouquet,box,standee,potted', // <--- NEW RULE
-        'image' => 'required|image|max:2048',
-    ]);
-
-    try {
-        $shop = Auth::user()->shop;
-        $path = $request->file('image')->store('products', 'public');
-
-        $shop->products()->create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price,
-            'category' => $request->category, // <--- SAVE CATEGORY
-            'image' => $path,
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'category' => 'required|string|in:bouquet,box,standee,potted',
+            'occasion' => 'required|string', // <--- VALIDATE OCCASION
+            'image' => 'required|image|max:2048',
         ]);
 
-        return response()->json(['message' => 'Product added successfully!']);
+        try {
+            $shop = Auth::user()->shop;
+            
+            // Upload Image
+            $path = $request->file('image')->store('products', 'public');
 
-    } catch (\Exception $e) {
-        Log::error($e);
-        return response()->json(['message' => 'Error saving product.'], 500);
+            $shop->products()->create([
+                'name' => $request->name,
+                'description' => $request->description,
+                'price' => $request->price,
+                'category' => $request->category,
+                'occasion' => $request->occasion, // <--- SAVING IT NOW!
+                'image' => $path,
+            ]);
+
+            return response()->json(['message' => 'Product added successfully!']);
+
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json(['message' => 'Error saving product.'], 500);
+        }
     }
-}
 
     /**
      * UPDATE: Save changes to an existing product.
      */
     public function update(Request $request, Product $product)
-{
-    if ($product->shop_id !== Auth::user()->shop->id) {
-        return response()->json(['message' => 'Unauthorized'], 403);
-    }
-
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'description' => 'required|string',
-        'price' => 'required|numeric|min:0',
-        'category' => 'required|string|in:bouquet,box,standee,potted', // <--- NEW RULE
-        'image' => 'nullable|image|max:2048',
-    ]);
-
-    try {
-        $data = [
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price,
-            'category' => $request->category, // <--- UPDATE CATEGORY
-        ];
-
-        if ($request->hasFile('image')) {
-            if ($product->image) Storage::disk('public')->delete($product->image);
-            $data['image'] = $request->file('image')->store('products', 'public');
+    {
+        if ($product->shop_id !== Auth::user()->shop->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $product->update($data);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'category' => 'required|string|in:bouquet,box,standee,potted',
+            'occasion' => 'required|string', // <--- VALIDATE OCCASION
+            'image' => 'nullable|image|max:2048',
+        ]);
 
-        return response()->json(['message' => 'Product updated successfully!']);
+        try {
+            $data = [
+                'name' => $request->name,
+                'description' => $request->description,
+                'price' => $request->price,
+                'category' => $request->category,
+                'occasion' => $request->occasion, // <--- UPDATING IT NOW!
+            ];
 
-    } catch (\Exception $e) {
-        Log::error($e);
-        return response()->json(['message' => 'Error updating product.'], 500);
+            if ($request->hasFile('image')) {
+                if ($product->image) {
+                    Storage::disk('public')->delete($product->image);
+                }
+                $data['image'] = $request->file('image')->store('products', 'public');
+            }
+
+            $product->update($data);
+
+            return response()->json(['message' => 'Product updated successfully!']);
+
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json(['message' => 'Error updating product.'], 500);
+        }
     }
-}
+
     /**
      * DELETE: Remove a product.
      */
     public function destroy(Product $product)
     {
-        // Security Check
         if ($product->shop_id !== Auth::user()->shop->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Delete image file
         if ($product->image) {
             Storage::disk('public')->delete($product->image);
         }

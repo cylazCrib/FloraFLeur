@@ -3,6 +3,10 @@
 @section('content')
 
 @php
+    // --- 1. DEFINE OCCASIONS LIST (So the dropdown works) ---
+    $occasions = ['Birthday', 'Anniversary', 'Valentines', 'Mothers Day', 'Graduation', 'Funeral', 'Just Because'];
+
+    // --- 2. PREPARE JS DATA ---
     $jsOrders = $orders->map(fn($o) => [ 
         'id' => $o->order_number, 'db_id' => $o->id, 'customer' => $o->customer_name, 'phone' => $o->customer_phone,
         'items' => $o->items->map(fn($i) => $i->quantity . 'x ' . $i->product_name)->join(', '),
@@ -16,7 +20,6 @@
     $jsInventory = $inventory->map(fn($i) => [
         'id' => $i->id, 'name' => $i->name, 'code' => $i->code ?? '-', 'type' => $i->type, 'quantity' => $i->quantity
     ]);
-    // [FIX] Changed $staffMembers to $staff
     $jsStaff = $staff->map(fn($s) => [
         'id' => $s->id, 'name' => $s->name, 'email' => $s->email, 'phone' => $s->phone ?? '-', 'role' => $s->role, 'status' => $s->status ?? 'Active'
     ]);
@@ -54,7 +57,19 @@
         <main id="dashboard-view" class="view active-view">
             <header class="main-header"><h1>G'DAY, {{ Auth::user()->shop->name ?? 'SHOP' }}!</h1></header>
             <section class="summary-cards">
-                <div class="card card-sales"><h2>Total Sales</h2><p class="card-main-value">₱{{ number_format($totalSales, 2) }}</p></div>
+                <div class="card card-sales" style="position: relative;">
+    <h2>Total Sales</h2>
+    <p class="card-main-value">₱{{ number_format($totalSales, 2) }}</p>
+    
+    {{-- CSV DOWNLOAD BUTTON --}}
+    <a href="{{ route('vendor.sales.export') }}" 
+       style="position: absolute; top: 15px; right: 15px; font-size: 1.2rem; color: #4A4A3A; opacity: 0.6; transition: opacity 0.2s;"
+       onmouseover="this.style.opacity=1" 
+       onmouseout="this.style.opacity=0.6"
+       title="Download Sales Report (CSV)">
+       <i class="fa-solid fa-file-arrow-down"></i>
+    </a>
+</div>
                 <div class="card card-orders"><h2>Orders</h2><p class="card-main-value">{{ $totalOrders }}</p></div>
                 <div class="card card-inventory"><h2>Inventory</h2><p class="card-main-value">{{ $inventoryCount }} items</p>
                     <p class="card-sub-value" style="{{ ($lowStockCount ?? 0) > 0 ? 'color:#D32F2F;font-weight:bold;' : '' }}">Low Stock: {{ $lowStockCount }}</p>
@@ -128,7 +143,19 @@
                         </td>
                         <td class="flex gap-2">
                              <button class="text-green-600 hover:text-green-800 update-status-btn" title="Save Status" data-id="{{ $o->id }}"><i class="fa-solid fa-check"></i></button>
-                             <button class="text-blue-600 hover:text-blue-800 view-order-btn" title="View" data-id="{{ $o->id }}"><i class="fa-regular fa-eye"></i></button>
+                             
+                             {{-- [FIXED] THIS BUTTON NOW HAS THE DATA FOR THE POPUP --}}
+                             <button class="text-blue-600 hover:text-blue-800 view-order-btn" 
+                                title="View" 
+                                data-id="{{ $o->id }}"
+                                data-customer="{{ $o->customer_name }}"
+                                data-phone="{{ $o->customer_phone }}"
+                                data-address="{{ $o->delivery_address }}"
+                                data-items="{{ $o->items->map(fn($i)=>$i->quantity.'x '.$i->product_name)->join(', ') }}"
+                                data-total="{{ number_format($o->total_amount, 2) }}"
+                                data-status="{{ $o->status }}">
+                                <i class="fa-regular fa-eye"></i>
+                             </button>
                         </td>
                     </tr>
                     @empty <tr><td colspan="6" class="text-center p-4">No orders.</td></tr> @endforelse
@@ -161,20 +188,34 @@
             <header class="main-header"><h1>PRODUCTS</h1></header>
             <section class="content-container">
                 <div class="content-header"><h2>List</h2><button class="action-button" id="new-product-btn">+ Product</button></div>
-                <div class="table-wrapper"><table class="data-table"><thead><tr><th>Img</th><th>Name</th><th>Description</th><th>Price</th><th>Action</th></tr></thead><tbody>
-                    @forelse($products as $p)
-                    <tr>
-                        <td><img src="{{ Storage::url($p->image) }}" width="40" class="rounded"></td>
-                        <td>{{ $p->name }}</td>
-                        <td>{{ Str::limit($p->description, 30) }}</td>
-                        <td>₱{{ number_format($p->price, 2) }}</td>
-                        <td class="flex gap-2">
-                            <button class="text-blue-600 hover:text-blue-800 edit-product-btn" data-id="{{ $p->id }}" data-name="{{ $p->name }}" data-desc="{{ $p->description }}" data-price="{{ $p->price }}" data-cat="{{ $p->category }}" data-occ="{{ $p->occasion }}"><i class="fa-regular fa-pen-to-square"></i></button>
-                            <button class="text-red-500 hover:text-red-700 del-product" data-id="{{ $p->id }}"><i class="fa-regular fa-trash-can"></i></button>
-                        </td>
-                    </tr>
-                    @empty <tr><td colspan="5" class="text-center p-4">No products.</td></tr> @endforelse
-                </tbody></table></div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead><tr><th>Img</th><th>Name</th><th>Category</th><th>Description</th><th>Price</th><th>Action</th></tr></thead>
+                        <tbody>
+                            @forelse($products as $p)
+                            <tr data-id="{{ $p->id }}" 
+                                data-name="{{ $p->name }}" 
+                                data-description="{{ $p->description }}" 
+                                data-price="{{ $p->price }}" 
+                                data-category="{{ $p->category }}" 
+                                data-occasion="{{ $p->occasion }}" 
+                                data-image-url="{{ Storage::url($p->image) }}"
+                                data-delete-url="{{ route('vendor.products.destroy', $p->id) }}">
+                                
+                                <td><img src="{{ Storage::url($p->image) }}" width="40" class="rounded"></td>
+                                <td>{{ $p->name }}</td>
+                                <td>{{ $p->category }}</td>
+                                <td>{{ Str::limit($p->description, 30) }}</td>
+                                <td>₱{{ number_format($p->price, 2) }}</td>
+                                <td class="flex gap-2">
+                                    <button class="text-blue-600 hover:text-blue-800 edit-product-btn"><i class="fa-regular fa-pen-to-square"></i></button>
+                                    <button class="text-red-500 hover:text-red-700 remove-product-btn"><i class="fa-regular fa-trash-can"></i></button>
+                                </td>
+                            </tr>
+                            @empty <tr><td colspan="6" class="text-center p-4">No products.</td></tr> @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </main>
 
@@ -241,11 +282,76 @@
     </div>
 </div>
 
+{{-- MODALS --}}
+
 <div id="order-form-modal" class="modal-overlay" style="display: none;"><div class="modal-content"><button class="modal-close-btn" data-close-modal> × </button><h2 class="modal-title" style="margin-bottom: 2rem;">Manual Order</h2><form class="styled-form" id="order-form"><div class="form-group"><label>Customer Name</label><input name="customer_name" required></div><div class="form-group"><label>Phone</label><input name="customer_phone" required></div><div class="form-group"><label>Address</label><input name="delivery_address" required></div><div class="form-group"><label>Product Name</label><input name="product_name" required></div><div class="form-group"><label>Total (₱)</label><input name="total_amount" type="number" required></div><div class="form-group"><label>Payment</label><select name="payment_method"><option>Cash</option><option>G-Cash</option></select></div><button type="submit" class="action-button">Create</button></form></div></div>
-<div id="product-form-modal" class="modal-overlay" style="display:none;"><div class="modal-content"><button class="modal-close-btn" data-close>x</button><h2>Add Product</h2><form id="product-form" class="styled-form" enctype="multipart/form-data"><input type="hidden" name="product_id" id="prod_id"><div class="form-group"><label>Name</label><input name="name" id="prod_name" required></div><div class="form-group"><label>Desc</label><input name="description" id="prod_desc" required></div><div class="form-group"><label>Price</label><input name="price" id="prod_price" type="number" required></div><div class="form-group"><label>Image</label><input name="image" type="file"></div><div class="form-group"><label>Category</label><select name="category" id="prod_cat"><option value="bouquet">Bouquet</option><option value="box">Box</option></select></div><button class="action-button">Save</button></form></div></div>
+
+<div id="product-form-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <button class="modal-close-btn" data-close-modal> &times; </button>
+        <h2 class="modal-title" style="margin-bottom: 2rem;" id="product-modal-title">Add New Product</h2>
+        
+        <form class="styled-form" id="product-form" enctype="multipart/form-data">
+            <input type="hidden" name="product_id" id="product_id">
+            
+            <div class="form-group">
+                <label for="p_name">Name</label>
+                <input name="name" id="p_name" type="text" required autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+                <label for="p_category">Category</label>
+                <select name="category" id="p_category" required>
+                    <option value="bouquet">Bouquet Flowers</option>
+                    <option value="box">Flower Boxes</option>
+                    <option value="standee">Standee Flowers</option>
+                    <option value="potted">Potted Plants</option>
+                </select>
+            </div>
+
+            {{-- NEW OCCASION DROPDOWN --}}
+            <div class="form-group">
+                <label for="p_occasion">Occasion</label>
+                <select name="occasion" id="p_occasion" required>
+                    <option value="" disabled selected>Select Occasion</option>
+                    @foreach($occasions as $occasion)
+                        <option value="{{ $occasion }}">{{ $occasion }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="p_description">Description</label>
+                <textarea name="description" id="p_description" rows="3" required autocomplete="off"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="p_price">Price (₱)</label>
+                <input name="price" id="p_price" type="number" step="0.01" required autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+                <label for="p_image">Image</label>
+                <input name="image" id="p_image" type="file" accept="image/*">
+            </div>
+            
+            <div style="display: flex; justify-content: center;">
+                <img id="image-preview" class="image-preview" alt="Image Preview" 
+                     style="display:none; max-width: 150px; max-height: 150px; margin-top: 10px; border-radius: 8px; object-fit: cover;">
+            </div>
+            
+            <div class="form-actions" style="justify-content: flex-end;">
+                <button type="submit" class="action-button" id="save-product-btn">Save Product</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="inventory-form-modal" class="modal-overlay" style="display:none;"><div class="modal-content"><button class="modal-close-btn" data-close>x</button><h2 id="inv-modal-title">Item</h2><form id="inventory-form" class="styled-form"><input type="hidden" name="item_id" id="item_id"><input type="hidden" name="type" id="inv-type"><div class="form-group"><label>Name</label><input name="name" id="inv_name" required></div><div class="form-group"><label>Code</label><input name="code" id="inv_code"></div><div class="form-group"><label>Qty</label><input name="quantity" id="inv_qty" type="number" required></div><button class="action-button">Save</button></form></div></div>
 <div id="staff-form-modal" class="modal-overlay" style="display:none;"><div class="modal-content"><button class="modal-close-btn" data-close>x</button><h2>Add Staff</h2><form id="staff-form" class="styled-form"><input type="hidden" name="staff_id" id="staff_id"><div class="form-group"><label>Name</label><input name="name" id="s_name" required></div><div class="form-group"><label>Email</label><input name="email" id="s_email" required></div><div class="form-group"><label>Phone</label><input name="phone" id="s_phone"></div><div class="form-group"><label>Role</label><select name="role" id="s_role"><option>Manager</option><option>Florist</option><option>Driver</option></select></div><button class="action-button">Save</button></form></div></div>
 <div id="order-details-modal" class="modal-overlay" style="display: none;"><div class="modal-content"><button class="modal-close-btn" data-close-modal> × </button><h2 class="modal-title">Order Details</h2><div id="order-details-content"></div></div></div>
 <div id="toast"></div>
+
+<script src="{{ asset('js/vendor-script.js') }}"></script>
 
 @endsection
