@@ -24,6 +24,12 @@
         'id' => $s->id, 'name' => $s->name, 'email' => $s->email, 'phone' => $s->phone ?? '-', 'role' => $s->role, 'status' => $s->status ?? 'Active'
     ]);
     $jsDrivers = $drivers->map(fn($d) => ['name' => $d->name]);
+    $jsRequests = $customRequests->map(fn($r) => [
+        'id' => $r->id, 'customer_name' => $r->user->name, 'customer_email' => $r->user->email, 'contact_number' => $r->contact_number,
+        'description' => $r->description, 'occasion' => $r->occasion, 'date_needed' => $r->date_needed ? \Carbon\Carbon::parse($r->date_needed)->format('M d, Y h:i A') : '-',
+        'budget' => $r->budget, 'color_preference' => $r->color_preference, 'reference_image_url' => $r->reference_image_url,
+        'vendor_quote' => $r->vendor_quote, 'status' => $r->status, 'created_at' => $r->created_at->format('M d, Y')
+    ]);
 @endphp
 
 <div id="db-data" 
@@ -32,6 +38,7 @@
     data-inventory="{{ json_encode($jsInventory) }}"
     data-staff="{{ json_encode($jsStaff) }}"
     data-drivers="{{ json_encode($jsDrivers) }}"
+    data-requests="{{ json_encode($jsRequests) }}"
     class="hidden"></div>
 
 <div class="dashboard-container"> 
@@ -58,18 +65,18 @@
             <header class="main-header"><h1>G'DAY, {{ Auth::user()->shop->name ?? 'SHOP' }}!</h1></header>
             <section class="summary-cards">
                 <div class="card card-sales" style="position: relative;">
-    <h2>Total Sales</h2>
-    <p class="card-main-value">₱{{ number_format($totalSales, 2) }}</p>
-    
-    {{-- CSV DOWNLOAD BUTTON --}}
-    <a href="{{ route('vendor.sales.export') }}" 
-       style="position: absolute; top: 15px; right: 15px; font-size: 1.2rem; color: #4A4A3A; opacity: 0.6; transition: opacity 0.2s;"
-       onmouseover="this.style.opacity=1" 
-       onmouseout="this.style.opacity=0.6"
-       title="Download Sales Report (CSV)">
-       <i class="fa-solid fa-file-arrow-down"></i>
-    </a>
-</div>
+                    <h2>Total Sales</h2>
+                    <p class="card-main-value">₱{{ number_format($totalSales, 2) }}</p>
+                    
+                    {{-- CSV DOWNLOAD BUTTON --}}
+                    <a href="{{ route('vendor.sales.export') }}" 
+                       style="position: absolute; top: 15px; right: 15px; font-size: 1.2rem; color: #4A4A3A; opacity: 0.6; transition: opacity 0.2s;"
+                       onmouseover="this.style.opacity=1" 
+                       onmouseout="this.style.opacity=0.6"
+                       title="Download Sales Report (CSV)">
+                       <i class="fa-solid fa-file-arrow-down"></i>
+                    </a>
+                </div>
                 <div class="card card-orders"><h2>Orders</h2><p class="card-main-value">{{ $totalOrders }}</p></div>
                 <div class="card card-inventory"><h2>Inventory</h2><p class="card-main-value">{{ $inventoryCount }} items</p>
                     <p class="card-sub-value" style="{{ ($lowStockCount ?? 0) > 0 ? 'color:#D32F2F;font-weight:bold;' : '' }}">Low Stock: {{ $lowStockCount }}</p>
@@ -92,29 +99,29 @@
             <section class="content-container">
                 <div class="table-wrapper">
                     <table class="data-table">
-                        <thead><tr><th>Date</th><th>Customer</th><th>Details</th><th>Status</th><th>Action</th></tr></thead>
+                        <thead><tr><th>Date</th><th>Customer</th><th>Occasion</th><th>Needed</th><th>Budget</th><th>Status</th><th>Action</th></tr></thead>
                         <tbody>
                             @forelse($customRequests as $req)
                             <tr>
                                 <td>{{ $req->created_at->format('M d') }}</td>
                                 <td>{{ $req->user->name }}<br><small class="text-gray-500">{{ $req->contact_number }}</small></td>
-                                <td title="{{ $req->description }}">{{ Str::limit($req->description, 40) }}</td>
+                                <td>{{ $req->occasion ?? 'Custom' }}</td>
+                                <td>{{ $req->date_needed ? \Carbon\Carbon::parse($req->date_needed)->format('M d') : '-' }}</td>
+                                <td class="font-bold text-[#86A873]">₱{{ number_format($req->budget, 2) }}</td>
                                 <td>
-                                    <select id="req-status-{{ $req->id }}" class="border p-1 rounded text-sm bg-white">
-                                        <option value="Pending" {{ $req->status=='Pending'?'selected':'' }}>Pending</option>
-                                        <option value="Accepted" {{ $req->status=='Accepted'?'selected':'' }}>Accepted</option>
-                                        <option value="Being Made" {{ $req->status=='Being Made'?'selected':'' }}>Being Made</option>
-                                        <option value="Out for Delivery" {{ $req->status=='Out for Delivery'?'selected':'' }}>Out for Delivery</option>
-                                        <option value="Delivered" {{ $req->status=='Delivered'?'selected':'' }}>Delivered</option>
-                                        <option value="Rejected" {{ $req->status=='Rejected'?'selected':'' }}>Rejected</option>
-                                    </select>
+                                    <span style="padding:4px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold; 
+                                    {{ $req->status == 'pending' ? 'background-color:#FFC107; color:#000;' : ($req->status == 'reviewing' ? 'background-color:#2196F3; color:#fff;' : ($req->status == 'approved' ? 'background-color:#4CAF50; color:#fff;' : 'background-color:#f44336; color:#fff;')) }}">
+                                        {{ ucfirst($req->status) }}
+                                    </span>
                                 </td>
                                 <td>
-                                    <button class="table-action-btn update-req-btn text-green-600 font-bold" data-id="{{ $req->id }}">Update</button>
+                                    <button class="table-action-btn view-request-btn text-blue-600 font-bold" data-id="{{ $req->id }}" title="View Details">
+                                        <i class="fa-solid fa-eye"></i> View
+                                    </button>
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="5" class="text-center p-4">No new requests.</td></tr>
+                            <tr><td colspan="7" class="text-center p-4">No custom requests yet.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -143,8 +150,6 @@
                         </td>
                         <td class="flex gap-2">
                              <button class="text-green-600 hover:text-green-800 update-status-btn" title="Save Status" data-id="{{ $o->id }}"><i class="fa-solid fa-check"></i></button>
-                             
-                             {{-- [FIXED] THIS BUTTON NOW HAS THE DATA FOR THE POPUP --}}
                              <button class="text-blue-600 hover:text-blue-800 view-order-btn" 
                                 title="View" 
                                 data-id="{{ $o->id }}"
@@ -350,8 +355,48 @@
 <div id="inventory-form-modal" class="modal-overlay" style="display:none;"><div class="modal-content"><button class="modal-close-btn" data-close>x</button><h2 id="inv-modal-title">Item</h2><form id="inventory-form" class="styled-form"><input type="hidden" name="item_id" id="item_id"><input type="hidden" name="type" id="inv-type"><div class="form-group"><label>Name</label><input name="name" id="inv_name" required></div><div class="form-group"><label>Code</label><input name="code" id="inv_code"></div><div class="form-group"><label>Qty</label><input name="quantity" id="inv_qty" type="number" required></div><button class="action-button">Save</button></form></div></div>
 <div id="staff-form-modal" class="modal-overlay" style="display:none;"><div class="modal-content"><button class="modal-close-btn" data-close>x</button><h2>Add Staff</h2><form id="staff-form" class="styled-form"><input type="hidden" name="staff_id" id="staff_id"><div class="form-group"><label>Name</label><input name="name" id="s_name" required></div><div class="form-group"><label>Email</label><input name="email" id="s_email" required></div><div class="form-group"><label>Phone</label><input name="phone" id="s_phone"></div><div class="form-group"><label>Role</label><select name="role" id="s_role"><option>Manager</option><option>Florist</option><option>Driver</option></select></div><button class="action-button">Save</button></form></div></div>
 <div id="order-details-modal" class="modal-overlay" style="display: none;"><div class="modal-content"><button class="modal-close-btn" data-close-modal> × </button><h2 class="modal-title">Order Details</h2><div id="order-details-content"></div></div></div>
+
+{{-- REQUEST DETAILS & QUOTE MODAL --}}
+<div id="request-details-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+        <button class="modal-close-btn" data-close-modal>×</button>
+        <h2 class="modal-title" style="margin-bottom: 1.5rem;">Request Details</h2>
+        <div id="request-details-content" style="margin-bottom: 2rem;">
+            {{-- Content loaded via JavaScript --}}
+        </div>
+        
+        {{-- EXISTING VENDOR QUOTE DISPLAY --}}
+        <div id="existing-vendor-quote" style="margin-bottom: 1rem;"></div>
+        
+        {{-- QUOTE SUBMISSION FORM --}}
+        <div style="border-top: 1px solid #ddd; padding-top: 1.5rem;">
+            <h3 style="font-weight: bold; margin-bottom: 1rem;">Submit Your Quote</h3>
+            <form id="quote-form" class="styled-form" style="display: none;">
+                <input type="hidden" name="request_id" id="quote-request-id">
+                <div class="form-group">
+                    <label for="quote-price">Your Quote Price (₱)</label>
+                    <input type="number" step="0.01" name="vendor_quote" id="quote-price" placeholder="Enter your quoted price" required style="font-size: 1rem; padding: 8px 12px;">
+                </div>
+                <div class="form-group">
+                    <label for="quote-notes">Notes for Customer (Optional)</label>
+                    <textarea name="quote_notes" id="quote-notes" rows="3" placeholder="Any special notes or questions?" style="font-size: 1rem; padding: 8px 12px;"></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="action-button" style="flex: 1;">Send Quote</button>
+                    <button type="button" class="action-button" onclick="document.getElementById('request-details-modal').style.display='none';" style="flex: 1; background-color: #999;">Close</button>
+                </div>
+            </form>
+            
+            {{-- APPROVE QUOTE BUTTON --}}
+            <button id="approve-quote-btn" type="button" class="action-button" style="display: none; width: 100%; margin-top: 1rem; background-color: #4CAF50; font-weight: bold;">
+                <i class="fa-solid fa-check"></i> Approve & Send to Customer
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="toast"></div>
 
-<script src="{{ asset('js/vendor-script.js') }}"></script>
+<script src="{{ asset('js/vendor.js') }}"></script>
 
 @endsection

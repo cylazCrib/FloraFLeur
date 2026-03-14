@@ -66,7 +66,12 @@ Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function (
     Route::patch('/orders/{order}/status', [VendorController::class, 'updateOrderStatus']);
     Route::patch('/orders/{order}/assign', [VendorController::class, 'assignDriver']);
     Route::patch('/requests/{id}/status', [VendorController::class, 'updateRequestStatus']);
+    Route::post('/requests/{id}/quote', [VendorController::class, 'submitRequestQuote'])->name('requests.quote');
+    Route::patch('/requests/{id}/approve', [VendorController::class, 'approveRequestQuote'])->name('requests.approve');
     Route::get('/sales/export', [VendorController::class, 'exportSales'])->name('sales.export');
+    
+    // Settings - Payment QR Codes
+    Route::post('/settings/payment-qr', [VendorController::class, 'savePaymentQR'])->name('settings.payment-qr');
 });
 
 // 5. Customer Routes

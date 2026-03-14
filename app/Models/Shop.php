@@ -14,6 +14,11 @@ class Shop extends Model
     // Allow mass assignment
     protected $guarded = [];
 
+    // Cast payment instructions to array for storing multiple instructions
+    protected $casts = [
+        'payment_instructions' => 'array',
+    ];
+
     /**
      * Get the user (owner) of the shop.
      */

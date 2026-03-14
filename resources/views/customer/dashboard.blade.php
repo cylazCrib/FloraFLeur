@@ -34,14 +34,37 @@
         'date' => $r->created_at->format('M d, Y'),
         'description' => $r->description,
         'status' => $r->status,
-        'budget' => $r->budget
+        'budget' => $r->budget,
+        'vendor_quote' => $r->vendor_quote ?? null,
+        'occasion' => $r->occasion ?? null
+    ]) : [];
+
+    // 4. [NEW] Prepare Shops with Products
+    $shopsData = isset($shops) ? $shops->map(fn($s) => [
+        'id' => $s->id,
+        'name' => $s->name,
+        'description' => $s->description,
+        'address' => $s->address,
+        'phone' => $s->phone,
+        'email' => $s->email,
+        'status' => $s->status,
+        'products' => $s->products->map(fn($p) => [
+            'id' => $p->id,
+            'name' => $p->name,
+            'description' => $p->description,
+            'price' => $p->price,
+            'image' => Storage::url($p->image),
+            'category' => $p->category ?? 'bouquet',
+            'occasion' => $p->occasion ?? 'all'
+        ])
     ]) : [];
 @endphp
 
-{{-- DATA PAYLOADS (The Bridge between PHP and JS) --}}
+{{-- DATA PAYLOADS --}}
 <div id="db-products-payload" data-products="{{ json_encode($productsData) }}" class="hidden"></div>
 <div id="db-orders-payload" data-orders="{{ json_encode($ordersData) }}" class="hidden"></div>
 <div id="db-requests-payload" data-requests="{{ json_encode($requestsData) }}" class="hidden"></div>
+<div id="db-shops-payload" data-shops="{{ json_encode($shopsData) }}" class="hidden"></div>
 
 <div id="app-container-dashboard" class="app-container active relative min-h-screen w-full flex-col font-sans">
     
@@ -86,16 +109,29 @@
                     </div>
 
                     <button class="nav-link hover:text-gray-300 uppercase bg-transparent border-none cursor-pointer" data-target="view-account">ACCOUNT</button>
+                    <button class="nav-link hover:text-gray-300 uppercase bg-transparent border-none cursor-pointer" data-target="view-shops">ALL SHOPS</button>
                     <button class="nav-link hover:text-gray-300 uppercase bg-transparent border-none cursor-pointer" data-target="view-request">REQUEST</button>
                     <button class="nav-link hover:text-gray-300 uppercase bg-transparent border-none cursor-pointer" data-target="view-purchases">MY PURCHASES</button>
                 </div>
 
-                <div class="flex items-center gap-8">
-                    <div class="nav-link flex flex-col items-center cursor-pointer group relative" data-target="view-cart">
+                <div class="flex items-center gap-6">
+                    {{-- FAVORITES ICON --}}
+                    <div class="nav-link flex flex-col items-center cursor-pointer group relative transition-transform hover:scale-110" data-target="view-favorites">
+                        <i class="fa-solid fa-heart text-xl text-white hover:text-red-400 transition-colors"></i>
+                        <span class="text-[10px] uppercase tracking-widest mt-1 hover:text-red-400">Likes</span>
+                    </div>
+
+                    {{-- CART ICON --}}
+                    <div class="nav-link flex flex-col items-center cursor-pointer group relative transition-transform hover:scale-110" data-target="view-cart">
                         <i class="fa-solid fa-cart-shopping text-xl"></i>
                         <span id="cart-badge" class="absolute -top-2 -right-2 bg-[#E65100] text-white text-[10px] rounded-full w-4 h-4 flex justify-center items-center opacity-0 transition-opacity">0</span>
+                        <span class="text-[10px] uppercase tracking-widest mt-1">Cart</span>
                     </div>
-                    <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" class="bg-[#6B6B61] hover:bg-[#7D7D73] text-white px-5 py-2 rounded text-xs font-medium shadow-sm">LOGOUT</button></form>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="bg-[#6B6B61] hover:bg-[#7D7D73] text-white px-5 py-2 rounded text-xs font-medium shadow-sm ml-2">LOGOUT</button>
+                    </form>
                 </div>
             </nav>
         </header>
@@ -109,44 +145,43 @@
                 </h1>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 w-full">
-                
                 <div class="filter-btn group relative aspect-[3/4] overflow-hidden rounded-xl shadow-2xl cursor-pointer" data-type="all" data-value="all">
                     <img src="{{ asset('images/imagegranopening123.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                     <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
                         <span class="text-2xl font-rosarivo tracking-wider text-white drop-shadow-md">Shop All</span>
                     </div>
                 </div>
-
                 <div class="filter-btn group relative aspect-[3/4] overflow-hidden rounded-xl shadow-2xl cursor-pointer mt-0 lg:mt-8" data-type="category" data-value="bouquet">
                     <img src="{{ asset('images/bouquet.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                     <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
                         <span class="text-2xl font-rosarivo tracking-wider text-white drop-shadow-md">Bouquets</span>
                     </div>
                 </div>
-
                 <div class="filter-btn group relative aspect-[3/4] overflow-hidden rounded-xl shadow-2xl cursor-pointer" data-type="category" data-value="basket">
                     <img src="{{ asset('images/flower basket.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                     <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
                         <span class="text-2xl font-rosarivo tracking-wider text-white drop-shadow-md">Baskets</span>
                     </div>
                 </div>
-
                 <div class="filter-btn group relative aspect-[3/4] overflow-hidden rounded-xl shadow-2xl cursor-pointer mt-0 lg:mt-8" data-type="category" data-value="box">
                     <img src="{{ asset('images/flower boxes.jpg') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                     <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
                         <span class="text-2xl font-rosarivo tracking-wider text-white drop-shadow-md">Flower Boxes</span>
                     </div>
                 </div>
-
             </div>
         </main>
 
         {{-- PRODUCTS GRID --}}
         <main id="view-products" class="view-section hidden flex-grow w-full max-w-[1400px] mx-auto px-4 py-12 pt-28">
              <h2 id="product-category-title" class="font-rosarivo text-4xl text-[#4A4A3A] mb-8 pl-4 border-l-4 border-[#86A873] bg-white/80 backdrop-blur-sm inline-block pr-6 py-2 rounded-r-lg text-gray-800">All Collection</h2>
-             <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {{-- JS WILL INJECT PRODUCTS HERE --}}
-             </div>
+             <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+        </main>
+
+        {{-- FAVORITES VIEW --}}
+        <main id="view-favorites" class="view-section hidden flex-grow w-full max-w-[1400px] mx-auto px-4 py-12 pt-28">
+            <h2 class="font-rosarivo text-4xl text-[#4A4A3A] mb-8 pl-4 border-l-4 border-red-400 bg-white/80 backdrop-blur-sm inline-block pr-6 py-2 rounded-r-lg text-gray-800">My Favorites</h2>
+            <div id="favorites-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
         </main>
 
         {{-- CART VIEW --}}
@@ -159,6 +194,12 @@
                     <button class="btn-checkout-page bg-[#4A4A3A] hover:bg-[#3a3a2e] text-white px-8 py-3 rounded-lg font-bold">Proceed to Checkout</button>
                 </div>
             </div>
+        </main>
+
+        {{-- ALL SHOPS VIEW --}}
+        <main id="view-shops" class="view-section hidden flex-grow w-full max-w-[1400px] mx-auto px-4 py-12 pt-28">
+            <h2 class="font-rosarivo text-4xl text-[#4A4A3A] mb-8 pl-4 border-l-4 border-[#86A873] bg-white/80 backdrop-blur-sm inline-block pr-6 py-2 rounded-r-lg text-gray-800">All Shops</h2>
+            <div id="shops-grid" class="space-y-6"></div>
         </main>
 
         {{-- PURCHASES VIEW --}}
@@ -192,23 +233,111 @@
         </main>
 
         {{-- REQUEST VIEW --}}
-        <main id="view-request" class="view-section hidden flex-grow w-full max-w-2xl mx-auto px-4 py-12 pt-28 text-white">
-            <h1 class="text-4xl md:text-5xl font-bold mb-10 text-center">Request Arrangement</h1>
+        <main id="view-request" class="view-section hidden flex-grow w-full max-w-3xl mx-auto px-4 py-12 pt-28 text-white">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-center">Custom Arrangement Request</h1>
+            <p class="text-center text-gray-300 mb-8">Tell us your vision and we'll bring it to life!</p>
+            
+            {{-- Shop Selection Info --}}
+            <div id="shop-info-badge" class="bg-amber-900/40 border border-amber-400/50 rounded-lg p-4 mb-6 hidden">
+                <p class="text-sm text-amber-100">
+                    <i class="fa-solid fa-store mr-2"></i>
+                    <strong>Request will be sent to:</strong> <span id="selected-shop-name" class="font-bold text-amber-300"></span>
+                </p>
+            </div>
+            
+            <div id="no-shop-warning" class="bg-red-900/40 border border-red-400/50 rounded-lg p-4 mb-6">
+                <p class="text-sm text-red-100">
+                    <i class="fa-solid fa-exclamation-circle mr-2"></i>
+                    Please <a href="#" class="underline font-bold hover:text-red-200" onclick="event.preventDefault(); app.shops.render(); app.nav.showView('view-shops')">select a shop</a> first to send a custom request.
+                </p>
+            </div>
+            
             <div class="bg-white/10 border border-page-border-trans rounded-lg shadow-xl p-8 backdrop-blur-md">
-                <p class="text-white/80 mb-6 text-center">Describe your dream bouquet or arrangement.</p>
-                <form id="custom-request-form" class="space-y-6">
+                <form id="custom-request-form" class="space-y-6" style="display: none;">
+                    {{-- Description --}}
                     <div>
-                        <label class="block text-sm font-medium text-white/90 mb-2">Description</label>
-                        <textarea id="request-description" rows="4" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white" required placeholder="Describe what you need..."></textarea>
+                        <label class="block text-sm font-bold text-white/90 mb-2">
+                            <i class="fa-solid fa-pencil mr-2 text-[#86A873]"></i>What's your vision?
+                        </label>
+                        <textarea id="request-description" rows="4" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white placeholder-white/50" required placeholder="Describe your arrangement, themes, flowers you like, style..."></textarea>
                     </div>
+
+                    {{-- Occasion --}}
+                    <div>
+                        <label class="block text-sm font-bold text-white/90 mb-2">
+                            <i class="fa-solid fa-gift mr-2 text-[#86A873]"></i>Occasion
+                        </label>
+                        <select id="request-occasion" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white">
+                            <option value="" class="text-gray-800">-- Select Occasion --</option>
+                            <option value="Birthday" class="text-gray-800">Birthday</option>
+                            <option value="Anniversary" class="text-gray-800">Anniversary</option>
+                            <option value="Valentines" class="text-gray-800">Valentine's Day</option>
+                            <option value="Mothers Day" class="text-gray-800">Mother's Day</option>
+                            <option value="Graduation" class="text-gray-800">Graduation</option>
+                            <option value="Wedding" class="text-gray-800">Wedding</option>
+                            <option value="Funeral" class="text-gray-800">Funeral</option>
+                            <option value="Just Because" class="text-gray-800">Just Because</option>
+                            <option value="Other" class="text-gray-800">Other</option>
+                        </select>
+                    </div>
+
+                    {{-- Date Needed & Budget --}}
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-sm font-medium text-white/90 mb-2">Budget (₱)</label><input type="number" id="request-budget" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white"></div>
-                        <div><label class="block text-sm font-medium text-white/90 mb-2">Contact</label><input type="tel" id="request-contact" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white"></div>
+                        <div>
+                            <label class="block text-sm font-bold text-white/90 mb-2">
+                                <i class="fa-solid fa-calendar mr-2 text-[#86A873]"></i>Date Needed
+                            </label>
+                            <input type="datetime-local" id="request-date-needed" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-white/90 mb-2">
+                                <i class="fa-solid fa-money-bill mr-2 text-[#86A873]"></i>Budget Range (₱)
+                            </label>
+                            <input type="number" id="request-budget" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white placeholder-white/50" placeholder="e.g., 2000">
+                        </div>
                     </div>
+
+                    {{-- Color Preference & Contact --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-white/90 mb-2">
+                                <i class="fa-solid fa-palette mr-2 text-[#86A873]"></i>Color Preference
+                            </label>
+                            <input type="text" id="request-color" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white placeholder-white/50" placeholder="e.g., Red & Pink, Pastel, White">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-white/90 mb-2">
+                                <i class="fa-solid fa-phone mr-2 text-[#86A873]"></i>Contact Number
+                            </label>
+                            <input type="tel" id="request-contact" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white placeholder-white/50" placeholder="09xxxxxxxxx" required>
+                        </div>
+                    </div>
+
+                    {{-- Reference Images --}}
+                    <div>
+                        <label class="block text-sm font-bold text-white/90 mb-2">
+                            <i class="fa-solid fa-image mr-2 text-[#86A873]"></i>Reference Images (Optional)
+                        </label>
+                        <input type="text" id="request-reference-link" class="w-full p-3 rounded bg-white/20 border border-white/30 text-white placeholder-white/50" placeholder="Paste link to Pinterest/Google Images or describe reference style">
+                        <small class="text-white/70">Share links to images of styles you love</small>
+                    </div>
+
+                    {{-- Info Badge --}}
+                    <div class="bg-blue-900/30 border border-blue-400/50 rounded-lg p-4">
+                        <p class="text-sm text-blue-100">
+                            <i class="fa-solid fa-info-circle mr-2"></i>
+                            After we receive your request, our florists will review it and provide a quote. You can discuss details and finalize the arrangement.
+                        </p>
+                    </div>
+
                     <div class="text-right">
-                        <button type="submit" class="btn-submit-request bg-[#86A873] text-white font-bold py-3 px-8 rounded-lg shadow-lg">Send Request</button>
+                        <button type="submit" class="btn-submit-request bg-[#86A873] hover:bg-[#759465] text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-colors">
+                            <i class="fa-solid fa-send mr-2"></i>Send Request
+                        </button>
                     </div>
                 </form>
+            </div>
+        </main>
             </div>
         </main>
 
@@ -221,14 +350,28 @@
                     <div id="checkout-cart-items" class="space-y-2 mb-6"></div>
                     <div class="border-t pt-4"><div class="flex justify-between font-bold text-lg mb-4"><span>Total</span><span id="checkout-total">₱0.00</span></div></div>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-xl">
-                    <h3 class="font-rosarivo text-xl mb-4">Payment Method</h3>
-                    <div class="grid grid-cols-3 gap-2 mb-4">
-                        <button class="payment-btn py-2 border rounded bg-[#86A873] text-white selected" data-method="Cash On Delivery">COD</button>
-                        <button class="payment-btn py-2 border rounded" data-method="E-Wallet">E-Wallet</button>
-                        <button class="payment-btn py-2 border rounded" data-method="Card">Card</button>
+                <div class="bg-white p-8 rounded-xl shadow-xl">
+                    <h3 class="font-rosarivo text-2xl mb-6 text-[#4A4A3A] flex items-center">
+                        <i class="fa-solid fa-credit-card text-[#86A873] mr-3"></i>Payment Method
+                    </h3>
+                    <div class="grid grid-cols-3 gap-3 mb-6">
+                        <button class="payment-btn py-3 border-2 rounded-lg bg-[#86A873] text-white selected font-bold transition-all hover:shadow-md" data-method="Cash On Delivery" title="Pay when item arrives">
+                            <i class="fa-solid fa-money-bill-wave block text-xl mb-2 mx-auto"></i>COD
+                        </button>
+                        <button class="payment-btn py-3 border-2 border-gray-300 rounded-lg text-gray-800 font-bold transition-all hover:shadow-md hover:border-[#86A873]" data-method="E-Wallet" title="Pay via GCash/Maya">
+                            <i class="fa-solid fa-wallet block text-xl mb-2 mx-auto"></i>E-Wallet
+                        </button>
+                        <button class="payment-btn py-3 border-2 border-gray-300 rounded-lg text-gray-800 font-bold transition-all hover:shadow-md hover:border-[#86A873]" data-method="Card" title="Visa, Mastercard, etc.">
+                            <i class="fa-solid fa-credit-card block text-xl mb-2 mx-auto"></i>Card
+                        </button>
                     </div>
-                    <button class="btn-place-order w-full bg-[#4A4A3A] text-white font-bold py-4 rounded-lg shadow-lg uppercase">Place Order</button>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6 text-sm text-blue-800">
+                        <i class="fa-solid fa-info-circle mr-2"></i>
+                        <span id="payment-info">Complete payment after checkout has been initiated.</span>
+                    </div>
+                    <button class="btn-place-order w-full bg-[#4A4A3A] text-white font-bold py-4 rounded-lg shadow-lg uppercase hover:bg-[#3a3a2e] transition-colors">
+                        <i class="fa-solid fa-check-circle mr-2"></i>Place Order & Pay
+                    </button>
                 </div>
             </div>
         </main>
@@ -236,7 +379,7 @@
 </div>
 
 {{-- MODALS --}}
-<div id="product-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.6);">
+<div id="product-modal" class="app-container fixed inset-0 z-50 flex items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.6);">
     <div class="relative w-full max-w-4xl bg-[#F5F5F0] rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden">
         <button class="modal-close-btn absolute top-4 right-4 text-gray-500 hover:text-red-500 z-50 p-2 text-2xl font-bold">&times;</button>
         <div class="w-full md:w-1/2 h-64 md:h-auto relative"><img id="modal-product-image" class="absolute inset-0 w-full h-full object-cover"></div>
@@ -258,7 +401,9 @@
         </div>
     </div>
 </div>
-<div id="thank-you-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.6);">
+
+{{-- THANK YOU MODAL --}}
+<div id="thank-you-modal" class="app-container fixed inset-0 z-50 flex items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.6);">
     <div class="bg-white rounded-xl shadow-2xl p-10 text-center max-w-md">
         <h2 class="text-3xl font-rosarivo mb-4 text-[#4A4A3A]">Thank You!</h2>
         <p class="text-gray-600 mb-8">Order placed successfully.</p>
@@ -267,8 +412,7 @@
 </div>
 
 {{-- RECEIPT MODAL --}}
-<div id="receipt-modal" class="app-container fixed inset-0 z-50 items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.6);">
-    {{-- Added 'text-black' here to force all text inside to be visible --}}
+<div id="receipt-modal" class="app-container fixed inset-0 z-50 flex items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.6);">
     <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden relative font-mono text-sm text-black">
         <button class="modal-close-btn absolute top-2 right-2 text-gray-500 hover:text-red-500 z-50 p-2 text-xl font-bold">&times;</button>
         
@@ -277,29 +421,20 @@
                 <h2 class="font-bold text-xl uppercase tracking-widest text-black">Flora Fleur</h2>
                 <p class="text-xs text-black">Official Receipt</p>
             </div>
-            
             <div class="mb-4 text-black">
                 <div class="flex justify-between"><span>Order #:</span><span id="rec-id" class="font-bold"></span></div>
                 <div class="flex justify-between"><span>Date:</span><span id="rec-date"></span></div>
                 <div class="flex justify-between"><span>Customer:</span><span id="rec-name">{{ Auth::user()->name }}</span></div>
             </div>
-
             <div class="border-t border-b border-dashed border-gray-400 py-4 mb-4 text-black">
                 <table class="w-full text-left">
                     <thead><tr><th class="pb-2 text-black">Item</th><th class="text-right pb-2 text-black">Amt</th></tr></thead>
                     <tbody id="rec-items"></tbody>
+                    <tbody id="rec-quote-info"></tbody>
                 </table>
             </div>
-
-            <div class="flex justify-between font-bold text-lg mb-6 text-black">
-                <span>TOTAL</span>
-                <span id="rec-total"></span>
-            </div>
-
-            <div class="text-center text-xs text-black mt-4">
-                <p>Thank you for shopping with us!</p>
-                <p>Please come again.</p>
-            </div>
+            <div class="flex justify-between font-bold text-lg mb-6 text-black"><span>TOTAL</span><span id="rec-total"></span></div>
+            <div class="text-center text-xs text-black mt-4"><p>Thank you for shopping with us!</p><p>Please come again.</p></div>
         </div>
         
         <div class="bg-gray-200 p-4 text-center border-t border-gray-300">
@@ -307,7 +442,79 @@
         </div>
     </div>
 </div>
+
+{{-- PAYMENT MODAL --}}
+<div id="payment-modal" class="app-container fixed inset-0 z-50 flex items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.8);">
+    <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden relative font-sans">
+        <button class="modal-close-btn absolute top-4 right-4 text-gray-500 hover:text-red-500 z-50 p-2 text-xl font-bold">&times;</button>
+        
+        <div class="bg-gradient-to-r from-[#86A873] to-[#6B9161] p-6 text-white text-center mb-6">
+            <h3 id="pay-modal-title" class="font-rosarivo text-3xl mb-2">Complete Payment</h3>
+            <p class="text-sm opacity-90">Secure & Convenient Payment Options</p>
+        </div>
+
+        <div class="p-8">
+            {{-- E-WALLET SECTION --}}
+            <div id="pay-ewallet-content" class="hidden">
+                <div class="text-center mb-6">
+                    <i class="fa-solid fa-wallet text-5xl text-[#86A873] mb-3"></i>
+                    <p class="text-lg font-bold text-gray-800 mb-2">Pay via E-Wallet</p>
+                    <p class="text-sm text-gray-600 mb-6">Quick and secure payment using GCash or Maya</p>
+                </div>
+                
+                <div class="bg-gray-50 p-6 rounded-lg mb-6 border-2 border-dashed border-gray-300">
+                    <p class="text-sm font-bold text-gray-700 mb-3 text-center">Step 1: Scan QR Code</p>
+                    <div class="bg-white w-32 h-32 mx-auto mb-4 flex items-center justify-center rounded-lg border-2 border-[#86A873]">
+                        <i class="fa-solid fa-qrcode text-4xl text-[#86A873]"></i>
+                    </div>
+                    <p class="text-xs text-center text-gray-500">Using GCash or Maya app</p>
+                </div>
+
+                <div class="mb-4">
+                    <label class="text-xs font-bold text-gray-700 uppercase block mb-2">Step 2: Enter Reference Number</label>
+                    <input type="text" id="pay-ref-number" class="w-full border-2 border-gray-300 p-3 rounded-lg text-gray-800 focus:outline-none focus:border-[#86A873] focus:ring-2 focus:ring-[#86A873]/20" placeholder="e.g., 123456789">
+                    <p class="text-xs text-gray-500 mt-2">You'll see this refcode in the GCash/Maya confirmation</p>
+                </div>
+            </div>
+
+            {{-- CARD SECTION --}}
+            <div id="pay-card-content" class="hidden">
+                <div class="text-center mb-6">
+                    <i class="fa-solid fa-credit-card text-5xl text-[#86A873] mb-3"></i>
+                    <p class="text-lg font-bold text-gray-800 mb-2">Pay with Card</p>
+                    <p class="text-sm text-gray-600 mb-6">Visa, Mastercard, or other credit/debit cards</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 uppercase block mb-2">Card Number</label>
+                        <input type="text" class="w-full border-2 border-gray-300 p-3 rounded-lg text-gray-800 focus:outline-none focus:border-[#86A873] focus:ring-2 focus:ring-[#86A873]/20" placeholder="0000 0000 0000 0000" maxlength="19">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-700 uppercase block mb-2">Expiry</label>
+                            <input type="text" class="w-full border-2 border-gray-300 p-3 rounded-lg text-gray-800 focus:outline-none focus:border-[#86A873] focus:ring-2 focus:ring-[#86A873]/20" placeholder="MM/YY" maxlength="5">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-700 uppercase block mb-2">CVV</label>
+                            <input type="text" class="w-full border-2 border-gray-300 p-3 rounded-lg text-gray-800 focus:outline-none focus:border-[#86A873] focus:ring-2 focus:ring-[#86A873]/20" placeholder="123" maxlength="4">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-confirm-payment" class="w-full bg-[#4A4A3A] text-white font-bold py-3 rounded-lg shadow-lg hover:bg-[#3a3a2e] transition-colors mt-6">
+                <i class="fa-solid fa-lock mr-2"></i>Confirm & Pay Securely
+            </button>
+
+            <p class="text-xs text-gray-500 text-center mt-4">
+                <i class="fa-solid fa-shield text-green-500 mr-1"></i>Your payment information is secure
+            </p>
+        </div>
+    </div>
+</div>
+
 {{-- SCRIPT LINK --}}
-<script src="{{ asset('js/customer.js') }}"></script>
+<script src="{{ asset('js/customer-script.js') }}"></script>
 
 @endsection

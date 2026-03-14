@@ -17,6 +17,7 @@
             'status' => $order->status, // Pending, Being Made, Delivered, etc.
             'driver' => $order->driver_name,
             'address' => $order->delivery_address,
+            'payment_method' => $order->payment_method ?? 'Cash On Delivery', // [NEW] Payment method
             // Full items array for details modal
             'full_items' => $order->items->map(fn($i) => [
                 'name' => $i->product_name,

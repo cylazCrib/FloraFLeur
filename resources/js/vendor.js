@@ -147,6 +147,82 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // 7. REQUEST ACTIONS
+                if (t.closest('.view-request-btn')) {
+                    const btn = t.closest('.view-request-btn');
+                    const requestId = btn.dataset.id;
+                    const requestsData = JSON.parse(document.getElementById('db-data').dataset.requests || '[]');
+                    const request = requestsData.find(r => r.id == requestId);
+                    
+                    if (request) {
+                        const content = document.getElementById('request-details-content');
+                        content.innerHTML = `
+                            <div style="background-color: #f9f9f9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                <h4 style="margin: 0 0 0.5rem 0; font-weight: bold;">Customer Information</h4>
+                                <p style="margin: 0.5rem 0;"><strong>Name:</strong> ${request.customer_name}</p>
+                                <p style="margin: 0.5rem 0;"><strong>Email:</strong> ${request.customer_email}</p>
+                                <p style="margin: 0.5rem 0;"><strong>Phone:</strong> ${request.contact_number}</p>
+                            </div>
+                            
+                            <div style="background-color: #f9f9f9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                <h4 style="margin: 0 0 0.5rem 0; font-weight: bold;">Request Details</h4>
+                                <p style="margin: 0.5rem 0;"><strong>Occasion:</strong> ${request.occasion || 'Not specified'}</p>
+                                <p style="margin: 0.5rem 0;"><strong>Date Needed:</strong> ${request.date_needed}</p>
+                                <p style="margin: 0.5rem 0;"><strong>Budget:</strong> ₱${parseFloat(request.budget).toFixed(2)}</p>
+                                <p style="margin: 0.5rem 0;"><strong>Color Preference:</strong> ${request.color_preference || 'Not specified'}</p>
+                                <p style="margin: 0.5rem 0;"><strong>Description:</strong></p>
+                                <p style="margin: 0.5rem 0; padding: 0.5rem; background-color: white; border-left: 3px solid #86A873; border-radius: 4px;">${request.description}</p>
+                                ${request.reference_image_url ? `<p style="margin: 0.5rem 0;"><strong>Reference Image URL:</strong> <a href="${request.reference_image_url}" target="_blank" style="color: #86A873; text-decoration: underline;">View Reference</a></p>` : ''}
+                            </div>
+                            
+                            <div style="background-color: #f9f9f9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                <h4 style="margin: 0 0 0.5rem 0; font-weight: bold;">Status</h4>
+                                <p style="margin: 0.5rem 0;">
+                                    <span style="padding: 4px 8px; border-radius: 4px; font-weight: bold; 
+                                    ${request.status == 'pending' ? 'background-color: #FFC107; color: #000;' : (request.status == 'reviewing' ? 'background-color: #2196F3; color: #fff;' : (request.status == 'approved' ? 'background-color: #4CAF50; color: #fff;' : 'background-color: #f44336; color: #fff;'))}>
+                                        ${request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                                    </span>
+                                </p>
+                            </div>
+                        `;
+                        
+                        // Show vendor quote if exists
+                        if (request.vendor_quote) {
+                            const existingQuote = document.getElementById('existing-vendor-quote');
+                            if (existingQuote) {
+                                existingQuote.innerHTML = `
+                                    <div style="background-color: #e8f5e9; padding: 1rem; border-radius: 8px; border-left: 4px solid #4CAF50; margin-bottom: 1rem;">
+                                        <h4 style="margin: 0 0 0.5rem 0; font-weight: bold; color: #2e7d32;">Your Quote</h4>
+                                        <p style="margin: 0.5rem 0; font-size: 1.5rem; font-weight: bold; color: #1b5e20;">₱${parseFloat(request.vendor_quote).toFixed(2)}</p>
+                                    </div>
+                                `;
+                            }
+                        }
+                        
+                        // Show quote form only if status is 'pending'
+                        const quoteForm = document.getElementById('quote-form');
+                        if (request.status === 'pending') {
+                            quoteForm.style.display = 'block';
+                            document.getElementById('quote-request-id').value = requestId;
+                            document.getElementById('quote-price').value = request.vendor_quote || '';
+                        } else {
+                            quoteForm.style.display = 'none';
+                        }
+                        
+                        // Show approval button if status is 'reviewing' and quote exists
+                        const approveBtn = document.getElementById('approve-quote-btn');
+                        if (approveBtn) {
+                            if (request.status === 'reviewing' && request.vendor_quote) {
+                                approveBtn.style.display = 'block';
+                                approveBtn.dataset.requestId = requestId;
+                            } else {
+                                approveBtn.style.display = 'none';
+                            }
+                        }
+                        
+                        this.openModal('request-details-modal');
+                    }
+                }
+
                 if (t.closest('.update-req-btn')) {
                     const btn = t.closest('.update-req-btn');
                     const id = btn.dataset.id;
@@ -198,6 +274,109 @@ document.addEventListener('DOMContentLoaded', () => {
             const gmailForm = document.getElementById('gmail-form');
             if(gmailForm) gmailForm.addEventListener('submit', e => { e.preventDefault(); alert('Connected'); });
             
+            // Payment QR Form
+            const paymentQRForm = document.getElementById('payment-qr-form');
+            if (paymentQRForm) {
+                paymentQRForm.addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const formData = new FormData(paymentQRForm);
+                    
+                    try {
+                        const response = await fetch('/vendor/settings/payment-qr', {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrfToken },
+                            body: formData
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                            alert('Error: ' + (data.error || 'Failed to save payment settings'));
+                            return;
+                        }
+                        
+                        // Update QR display
+                        if (data.gcash_qr_url) {
+                            const gcashQR = document.getElementById('gcash-qr-preview');
+                            if (gcashQR) gcashQR.innerHTML = `<div style="margin-top: 1rem; border: 1px solid #ddd; padding: 1rem; border-radius: 8px;"><p style="font-weight: bold; margin-bottom: 0.5rem;">Current GCash QR:</p><img src="${data.gcash_qr_url}" alt="GCash QR" style="max-width: 150px; height: auto; border-radius: 8px;"></div>`;
+                        }
+                        
+                        if (data.maya_qr_url) {
+                            const mayaQR = document.getElementById('maya-qr-preview');
+                            if (mayaQR) mayaQR.innerHTML = `<div style="margin-top: 1rem; border: 1px solid #ddd; padding: 1rem; border-radius: 8px;"><p style="font-weight: bold; margin-bottom: 0.5rem;">Current Maya QR:</p><img src="${data.maya_qr_url}" alt="Maya QR" style="max-width: 150px; height: auto; border-radius: 8px;"></div>`;
+                        }
+                        
+                        alert(data.message || 'Payment settings saved successfully');
+                        paymentQRForm.reset();
+                    } catch (err) {
+                        console.error(err);
+                        alert('Failed to save payment settings');
+                    }
+                });
+            }
+            
+            // Quote Form (for custom requests)
+            const quoteForm = document.getElementById('quote-form');
+            if (quoteForm) {
+                quoteForm.addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const requestId = document.getElementById('quote-request-id').value;
+                    const vendorQuote = document.getElementById('quote-price').value;
+                    const notes = document.getElementById('quote-notes').value;
+                    
+                    try {
+                        const response = await fetch(`/vendor/requests/${requestId}/quote`, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ vendor_quote: vendorQuote, quote_notes: notes })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                            alert('Error: ' + (data.error || 'Failed to submit quote'));
+                            return;
+                        }
+                        
+                        alert(data.message || 'Quote saved. Click "Approve & Send to Customer" to notify them.');
+                        window.location.reload();
+                    } catch (err) {
+                        console.error(err);
+                        alert('Failed to submit quote');
+                    }
+                });
+            }
+            
+            // Approve Quote Button
+            document.addEventListener('click', e => {
+                if (e.target.closest('#approve-quote-btn')) {
+                    const btn = e.target.closest('#approve-quote-btn');
+                    const requestId = btn.dataset.requestId;
+                    
+                    if (!confirm('Are you sure you want to approve this quote and send it to the customer?')) return;
+                    
+                    fetch(`/vendor/requests/${requestId}/approve`, {
+                        method: 'PATCH',
+                        headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) {
+                            alert('Error: ' + data.error);
+                        } else {
+                            alert(data.message || 'Quote approved! Order created: ' + (data.order_number || ''));
+                            document.getElementById('request-details-modal').style.display = 'none';
+                            window.location.reload();
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Failed to approve quote');
+                    });
+                }
+            });
+            
             const announceForm = document.getElementById('announcement-form');
             if(announceForm) announceForm.addEventListener('submit', e => { e.preventDefault(); alert('Posted'); });
         },
@@ -232,6 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p><strong>Customer:</strong> ${data.customer}</p>
                     <p><strong>Phone:</strong> ${data.phone}</p>
                     <p><strong>Address:</strong> ${data.address}</p>
+                    <p><strong>Payment Method:</strong> <span style="background-color:#86A873; color:white; padding:3px 8px; border-radius:4px; font-weight:bold;">${data.payment_method}</span></p>
                     <hr style="margin:10px 0;">
                     <p><strong>Items:</strong> ${data.items}</p>
                     <p><strong>Total:</strong> ₱${data.total}</p>

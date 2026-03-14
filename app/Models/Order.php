@@ -12,6 +12,7 @@ class Order extends Model
     protected $fillable = [
         'shop_id',
         'user_id',
+        'custom_request_id',
         'order_number',
         'customer_name',
         'customer_phone',
@@ -37,5 +38,10 @@ class Order extends Model
     public function shop()
     {
         return $this->belongsTo(Shop::class);
+    }
+
+    public function customRequest()
+    {
+        return $this->belongsTo(CustomRequest::class);
     }
 }

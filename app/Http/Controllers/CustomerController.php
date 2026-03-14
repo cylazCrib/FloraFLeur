@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\CustomRequest;
+use App\Models\Shop;
 
 class CustomerController extends Controller
 {
@@ -25,7 +26,13 @@ class CustomerController extends Controller
         // 3. Fetch custom requests
         $requests = CustomRequest::where('user_id', Auth::id())->latest()->get();
 
-        // 4. [NEW] Define Occasions for the Filter
+        // 4. [NEW] Fetch all approved shops with their products
+        $shops = Shop::where('status', 'approved')
+                    ->with('products')
+                    ->latest()
+                    ->get();
+
+        // 5. [NEW] Define Occasions for the Filter
         $occasions = [
             'Birthday',
             'Anniversary',
@@ -36,8 +43,8 @@ class CustomerController extends Controller
             'Just Because'
         ];
 
-        // 5. Pass everything to the view
-        return view('customer.dashboard', compact('products', 'orders', 'requests', 'occasions'));
+        // 6. Pass everything to the view
+        return view('customer.dashboard', compact('products', 'orders', 'requests', 'shops', 'occasions'));
     }
 
     public function updateProfile(Request $request)
@@ -126,14 +133,25 @@ class CustomerController extends Controller
 
     public function storeRequest(Request $request)
     {
-        $request->validate(['description' => 'required']);
+        $request->validate([
+            'shop_id' => 'required|exists:shops,id',
+            'description' => 'required|string',
+            'contact_number' => 'required|string',
+            'date_needed' => 'required|date_format:Y-m-d\TH:i',
+        ]);
+        
         CustomRequest::create([
             'user_id' => Auth::id(),
+            'shop_id' => $request->shop_id,
             'description' => $request->description,
+            'occasion' => $request->occasion,
+            'date_needed' => $request->date_needed,
             'budget' => $request->budget,
+            'color_preference' => $request->color_preference,
             'contact_number' => $request->contact_number,
-            'status' => 'Pending'
+            'reference_image_url' => $request->reference_image_url,
+            'status' => 'pending'
         ]);
-        return response()->json(['message' => 'Request sent successfully!']);
+        return response()->json(['message' => 'Request sent to ' . Shop::find($request->shop_id)->name . '! We\'ll review it and provide a quote soon.']);
     }
 }

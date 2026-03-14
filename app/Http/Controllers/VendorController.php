@@ -49,10 +49,7 @@ class VendorController extends Controller
         $drivers = Staff::where('shop_id', $shop->id)->where('role', 'Driver')->get();
 
         $customRequests = CustomRequest::with('user')
-            ->where(function($query) {
-                $query->where('status', 'Pending')->whereNull('shop_id');
-            })
-            ->orWhere('shop_id', $shop->id)
+            ->where('shop_id', $shop->id)
             ->latest()
             ->get();
 
@@ -192,5 +189,173 @@ class VendorController extends Controller
         ]);
         OrderItem::create(['order_id' => $order->id, 'product_id' => 0, 'product_name' => $request->product_name, 'quantity' => 1, 'price' => $request->total_amount]);
         return response()->json(['message' => 'Order created']);
+    }
+
+    public function savePaymentQR(Request $request) {
+        $user = Auth::user();
+        $shop = $user->shop;
+
+        if (!$shop) {
+            return response()->json(['error' => 'Shop not found'], 404);
+        }
+
+        // Validate request
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'payment_instructions' => 'nullable|string',
+            'gcash_qr' => 'nullable|image|mimes:jpeg,png|max:2048',
+            'maya_qr' => 'nullable|image|mimes:jpeg,png|max:2048',
+        ], [
+            'gcash_qr.image' => 'GCash QR must be an image file',
+            'gcash_qr.mimes' => 'GCash QR must be JPG or PNG format',
+            'gcash_qr.max' => 'GCash QR must not exceed 2MB',
+            'maya_qr.image' => 'Maya QR must be an image file',
+            'maya_qr.mimes' => 'Maya QR must be JPG or PNG format',
+            'maya_qr.max' => 'Maya QR must not exceed 2MB',
+        ]);
+
+        try {
+            $updateData = ['email' => $validated['email']];
+
+            // If payment instructions provided, store as JSON array
+            if ($validated['payment_instructions']) {
+                $updateData['payment_instructions'] = array_filter(
+                    array_map('trim', explode("\n", $validated['payment_instructions']))
+                );
+            }
+
+            // Handle GCash QR upload
+            if ($request->hasFile('gcash_qr')) {
+                $file = $request->file('gcash_qr');
+                $filename = 'gcash_' . time() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs("qr-codes/{$shop->id}", $filename, 'public');
+                $updateData['gcash_qr_url'] = '/storage/' . $path;
+            }
+
+            // Handle Maya QR upload
+            if ($request->hasFile('maya_qr')) {
+                $file = $request->file('maya_qr');
+                $filename = 'maya_' . time() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs("qr-codes/{$shop->id}", $filename, 'public');
+                $updateData['maya_qr_url'] = '/storage/' . $path;
+            }
+
+            // Update shop with payment data
+            $shop->update($updateData);
+
+            return response()->json([
+                'message' => 'Payment settings updated successfully',
+                'gcash_qr_url' => $shop->gcash_qr_url,
+                'maya_qr_url' => $shop->maya_qr_url,
+                'email' => $shop->email
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to save payment settings: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function submitRequestQuote(Request $request, $id) {
+        $user = Auth::user();
+        $shop = $user->shop;
+        
+        if (!$shop) {
+            return response()->json(['error' => 'Shop not found'], 404);
+        }
+
+        $customRequest = CustomRequest::find($id);
+        
+        if (!$customRequest || $customRequest->shop_id != $shop->id) {
+            return response()->json(['error' => 'Request not found'], 404);
+        }
+
+        // Validate quote price
+        $validated = $request->validate([
+            'vendor_quote' => 'required|numeric|min:0',
+            'quote_notes' => 'nullable|string'
+        ]);
+
+        try {
+            // Update request with vendor quote and change status to reviewing
+            $customRequest->update([
+                'vendor_quote' => $validated['vendor_quote'],
+                'status' => 'reviewing'
+            ]);
+
+            return response()->json([
+                'message' => 'Quote saved. Click "Approve & Send to Customer" to notify them of your quote.',
+                'vendor_quote' => $customRequest->vendor_quote
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to submit quote: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function approveRequestQuote(Request $request, $id) {
+        $user = Auth::user();
+        $shop = $user->shop;
+        
+        if (!$shop) {
+            return response()->json(['error' => 'Shop not found'], 404);
+        }
+
+        $customRequest = CustomRequest::find($id);
+        
+        if (!$customRequest || $customRequest->shop_id != $shop->id) {
+            return response()->json(['error' => 'Request not found'], 404);
+        }
+        
+        if (!$customRequest->vendor_quote) {
+            return response()->json(['error' => 'No quote to approve'], 400);
+        }
+
+        try {
+            // Change status to approved
+            $customRequest->update([
+                'status' => 'approved'
+            ]);
+
+            // Create an Order record for this custom arrangement
+            $orderNumber = 'ORD-' . date('YmdHis') . '-' . $customRequest->id;
+            $order = Order::create([
+                'shop_id' => $shop->id,
+                'user_id' => $customRequest->user_id,
+                'custom_request_id' => $customRequest->id,
+                'order_number' => $orderNumber,
+                'customer_name' => $customRequest->user->name,
+                'customer_phone' => $customRequest->contact_number,
+                'customer_email' => $customRequest->user->email,
+                'delivery_address' => $customRequest->user->address ?? 'Not specified',
+                'delivery_date' => $customRequest->date_needed ?? now()->addDays(5),
+                'total_amount' => $customRequest->vendor_quote,
+                'status' => 'pending',
+                'payment_method' => 'pending'
+            ]);
+
+            // Create an OrderItem for the custom arrangement
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => null,
+                'product_name' => 'Custom Arrangement - ' . ($customRequest->occasion ?? 'Custom'),
+                'quantity' => 1,
+                'price' => $customRequest->vendor_quote
+            ]);
+
+            return response()->json([
+                'message' => 'Quote approved! Customer has been notified at ' . $customRequest->user->email,
+                'order_id' => $order->id,
+                'order_number' => $orderNumber
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to approve quote: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
