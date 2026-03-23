@@ -14,6 +14,7 @@ use App\Models\InventoryItem;
 use App\Models\OrderItem;
 use App\Models\CustomRequest;
 use App\Models\Staff;
+use Inertia\Inertia;
 
 class VendorController extends Controller
 {
@@ -22,7 +23,7 @@ class VendorController extends Controller
         $user = Auth::user();
         $shop = $user->shop;
 
-        if (!$shop) return view('vendor.dashboard');
+        if (!$shop) return Inertia::render('Dashboard', ['error' => 'No shop found for this user.']);
 
         // --- 1. CALCULATE TOTAL SALES (Orders + Requests) ---
         $orderSales = Order::where('shop_id', $shop->id)->whereIn('status', ['Delivered', 'Completed'])->sum('total_amount');
@@ -53,7 +54,7 @@ class VendorController extends Controller
             ->latest()
             ->get();
 
-        return view('vendor.dashboard', compact(
+        return Inertia::render('Dashboard', compact(
             'totalSales', 'totalOrders', 'pendingOrders', 'deliveredOrders',
             'inventoryCount', 'lowStockCount', 'recentOrders',
             'orders', 'products', 'inventory', 'items', 'flowers', 'staff', 'drivers', 'customRequests'

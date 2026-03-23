@@ -12,8 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        
-        // --- SMART REDIRECT FOR LOGGED-IN USERS ---
+        // 1. Register the Inertia Middleware
+        $middleware->web(append: [
+            \App\Http\Middleware\HandleInertiaRequests::class,
+        ]);
+
+        // 2. --- SMART REDIRECT FOR LOGGED-IN USERS ---
+        // This ensures that when a user is already logged in and hits the login page, 
+        // they are sent to their specific dashboard based on their role.
         $middleware->redirectUsersTo(function (Request $request) {
             $user = $request->user();
             
@@ -32,7 +38,6 @@ return Application::configure(basePath: dirname(__DIR__))
             // Default for customers
             return '/customer/dashboard';
         });
-        
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

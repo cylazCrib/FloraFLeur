@@ -12,6 +12,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\CustomRequest;
 use App\Models\Shop;
+use Inertia\Inertia;
 
 class CustomerController extends Controller
 {
@@ -43,8 +44,11 @@ class CustomerController extends Controller
             'Just Because'
         ];
 
-        // 6. Pass everything to the view
-        return view('customer.dashboard', compact('products', 'orders', 'requests', 'shops', 'occasions'));
+        // 6. Get authenticated user
+        $user = Auth::user();
+
+        // 7. Pass everything to the view
+        return Inertia::render('Customer/Dashboard', compact('products', 'orders', 'requests', 'shops', 'occasions', 'user'));
     }
 
     public function updateProfile(Request $request)
@@ -65,69 +69,108 @@ class CustomerController extends Controller
 
     public function storeOrder(Request $request)
     {
-        $request->validate(['items' => 'required|array', 'payment_method' => 'required']);
-        $user = Auth::user();
-        
-        $cartItems = $request->items;
-        $ordersByShop = [];
-
-        // Logic to group orders by Shop
-        foreach ($cartItems as $item) {
-            $product = Product::find($item['id']);
-            if (!$product) continue;
-
-            $shopId = $product->shop_id;
-            
-            if (!isset($ordersByShop[$shopId])) {
-                $ordersByShop[$shopId] = ['shop_id' => $shopId, 'items' => [], 'total' => 0];
-            }
-
-            $cleanPrice = (float) str_replace([',', '₱', ' '], '', $product->price);
-            $qty = (int) $item['qty'];
-
-            $ordersByShop[$shopId]['items'][] = [
-                'product_id' => $product->id,
-                'product_name' => $product->name,
-                'price' => $cleanPrice,
-                'qty' => $qty
-            ];
-            
-            $ordersByShop[$shopId]['total'] += $cleanPrice * $qty;
-        }
-
-        DB::beginTransaction();
         try {
-            foreach ($ordersByShop as $shopData) {
-                $order = Order::create([
-                    'shop_id' => $shopData['shop_id'],
-                    'user_id' => $user->id,
-                    'order_number' => 'ORD-' . strtoupper(uniqid()),
-                    'customer_name' => $user->name,
-                    'customer_phone' => $user->phone ?? 'N/A',
-                    'customer_email' => $user->email,
-                    'delivery_address' => $user->address ?? 'Default Address',
-                    'delivery_date' => now()->addDays(3),
-                    'total_amount' => $shopData['total'],
-                    'status' => 'Pending',
-                    'payment_method' => $request->payment_method
-                ]);
-
-                foreach ($shopData['items'] as $itemData) {
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_id' => $itemData['product_id'],
-                        'product_name' => $itemData['product_name'],
-                        'quantity' => $itemData['qty'],
-                        'price' => $itemData['price'],
-                    ]);
-                }
-            }
+            \Log::info('🔵 [storeOrder] Order request received', $request->all());
             
-            DB::commit();
-            return response()->json(['message' => 'Order placed successfully!']);
+            $validated = $request->validate([
+                'items' => 'required|array|min:1',
+                'payment_method' => 'required|string'
+            ]);
+            
+            \Log::info('✅ [storeOrder] Validation passed');
+            
+            $user = Auth::user();
+            $cartItems = $request->items;
+            $ordersByShop = [];
+
+            // Logic to group orders by Shop
+            foreach ($cartItems as $item) {
+                \Log::info('📦 [storeOrder] Processing item:', $item);
+                
+                $product = Product::find($item['id']);
+                if (!$product) {
+                    \Log::warning('⚠️ [storeOrder] Product not found:', ['id' => $item['id']]);
+                    continue;
+                }
+
+                $shopId = $product->shop_id;
+                
+                if (!isset($ordersByShop[$shopId])) {
+                    $ordersByShop[$shopId] = ['shop_id' => $shopId, 'items' => [], 'total' => 0];
+                }
+
+                $cleanPrice = (float) str_replace([',', '₱', ' '], '', $product->price);
+                $qty = (int) $item['qty'];
+
+                $ordersByShop[$shopId]['items'][] = [
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'price' => $cleanPrice,
+                    'qty' => $qty
+                ];
+                
+                $ordersByShop[$shopId]['total'] += $cleanPrice * $qty;
+            }
+
+            \Log::info('🛍️ [storeOrder] Orders grouped by shop:', ['count' => count($ordersByShop)]);
+
+            DB::beginTransaction();
+            try {
+                foreach ($ordersByShop as $shopData) {
+                    \Log::info('📝 [storeOrder] Creating order for shop:', ['shop_id' => $shopData['shop_id']]);
+                    
+                    $order = Order::create([
+                        'shop_id' => $shopData['shop_id'],
+                        'user_id' => $user->id,
+                        'order_number' => 'ORD-' . strtoupper(uniqid()),
+                        'customer_name' => $user->name,
+                        'customer_phone' => $user->phone ?? 'N/A',
+                        'customer_email' => $user->email,
+                        'delivery_address' => $user->address ?? 'Default Address',
+                        'delivery_date' => now()->addDays(3),
+                        'total_amount' => $shopData['total'],
+                        'status' => 'Pending',
+                        'payment_method' => $request->payment_method
+                    ]);
+
+                    \Log::info('✅ [storeOrder] Order created:', ['order_id' => $order->id]);
+
+                    foreach ($shopData['items'] as $itemData) {
+                        OrderItem::create([
+                            'order_id' => $order->id,
+                            'product_id' => $itemData['product_id'],
+                            'product_name' => $itemData['product_name'],
+                            'quantity' => $itemData['qty'],
+                            'price' => $itemData['price'],
+                        ]);
+                    }
+                    
+                    \Log::info('✅ [storeOrder] Order items created for order:', ['order_id' => $order->id]);
+                }
+                
+                DB::commit();
+                \Log::info('🎉 [storeOrder] All orders created successfully');
+                
+                return response()->json([
+                    'message' => 'Order placed successfully!',
+                    'status' => 'success'
+                ], 201);
+            } catch (\Exception $dbError) {
+                DB::rollBack();
+                \Log::error('❌ [storeOrder] Database error:', ['error' => $dbError->getMessage()]);
+                throw $dbError;
+            }
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
+            \Log::error('🔴 [storeOrder] Exception:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return response()->json([
+                'message' => 'Error placing order',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 

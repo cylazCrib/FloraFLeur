@@ -9,6 +9,7 @@ use App\Models\Shop;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Order;
+use Inertia\Inertia;
 
 class AdminController extends Controller
 {
@@ -40,7 +41,7 @@ class AdminController extends Controller
             ->whereIn('status', ['Active', 'active', 'approved', 'Approved', 'Suspended', 'suspended'])
             ->get();
 
-        return view('admin.dashboard', compact('stats', 'pendingShops', 'activeShops', 'owners'));
+        return Inertia::render('Admin/Dashboard', compact('stats', 'pendingShops', 'activeShops', 'owners'));
     }
 
     // --- AJAX ACTIONS ---

@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 class LandingPageController extends Controller
 {
-    /**
-     * Show the public landing page.
-     */
     public function show()
     {
-        return view('landing'); // This returns your new landing.blade.php
+        return Inertia::render('Landing', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+        ]);
     }
 }
