@@ -9,13 +9,16 @@ class OrderItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['order_id', 'product_id', 'product_name', 'quantity', 'price', 'image'];
-
-    // FIX: Ensures numbers are clean and math works in Vue
-    protected $casts = [
-        'price' => 'float',
-        'quantity' => 'integer',
+    protected $fillable = [
+        'order_id',
+        'product_id',
+        'product_name',
+        'quantity',
+        'price',
     ];
 
-    public function order() { return $this->belongsTo(Order::class); }
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
 }
