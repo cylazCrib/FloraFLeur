@@ -21,7 +21,9 @@ Route::middleware(['auth'])->get('/dashboard', [App\Http\Controllers\DashboardCo
 Route::middleware(['auth'])->group(function () {
     Route::get('/vendor/dashboard', [VendorController::class, 'dashboard'])->name('vendor.dashboard');
     Route::get('/customer/dashboard', [CustomerController::class, 'dashboard'])->name('customer.dashboard');
+     Route::post('/customer/order', [CustomerController::class, 'storeOrder'])->name('customer.order.store');
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+   
 });
 
 // 3. PROFILE MANAGEMENT (Default Breeze)
