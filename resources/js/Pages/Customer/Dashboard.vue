@@ -55,6 +55,11 @@ const cartTotal = computed(() => {
 
 const cartBadgeCount = computed(() => cart.value.reduce((a, b) => a + Number(b.qty || 0), 0));
 
+const cartShops = computed(() => {
+    const shopIds = [...new Set(cart.value.map(i => i.shop_id))];
+    return props.shops.filter(s => shopIds.includes(s.id));
+});
+
 const filteredOrdersForView = computed(() => {
     if (activePurchaseTab.value === 'requests') return props.requests || [];
     return (props.orders || []).filter(o => {
@@ -272,10 +277,12 @@ watch([cart, favorites], () => saveData(), { deep: true });
                             <i class="fa-solid fa-cart-shopping text-xl text-white"></i>
                             <span v-if="cartBadgeCount > 0" class="absolute -top-2 -right-2 bg-orange-600 text-white text-[9px] rounded-full w-4 h-4 flex justify-center items-center font-bold shadow-lg border border-white/20">{{ cartBadgeCount }}</span>
                         </div>
-                        <form method="POST" action="/logout">
-                            <input type="hidden" name="_token" :value="$page.props.csrf_token">
-                            <button type="submit" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-5 py-2 rounded-full text-[10px] font-bold tracking-widest transition">LOGOUT</button>
-                        </form>
+                        <button 
+                         @click="router.post(route('logout'))" 
+                        class="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-5 py-2 rounded-full text-[10px] font-bold tracking-widest transition"
+                        >
+                         LOGOUT
+                    </button>
                     </div>
                 </nav>
             </header>
@@ -497,6 +504,22 @@ watch([cart, favorites], () => saveData(), { deep: true });
             <h3 class="font-rosarivo text-3xl mb-4">Secure Payment</h3>
             <p class="text-sm opacity-60 mb-8 uppercase tracking-widest">Verify via {{ paymentMethod }}</p>
             <div v-if="paymentMethod === 'E-Wallet'" class="mb-8">
+                <div v-for="shop in cartShops" :key="shop.id" class="mb-4 p-4 border rounded-xl">
+                    <p class="font-bold mb-2">{{ shop.name }} QR Codes</p>
+                    <div class="flex justify-around gap-2">
+                        <div v-if="shop.gcash_qr_url" class="text-[10px]">
+                            <p>GCash</p>
+                            <img :src="shop.gcash_qr_url" class="w-24 h-24 object-contain border">
+                        </div>
+                        <div v-if="shop.maya_qr_url" class="text-[10px]">
+                            <p>Maya</p>
+                            <img :src="shop.maya_qr_url" class="w-24 h-24 object-contain border">
+                        </div>
+                    </div>
+                    <div v-if="shop.payment_instructions" class="mt-2 text-[9px] text-left italic">
+                        <p v-for="inst in shop.payment_instructions" :key="inst">• {{ inst }}</p>
+                    </div>
+                </div>
                 <input v-model="paymentRefNumber" class="w-full p-5 rounded-2xl border-2 border-gray-100 text-center font-bold text-xl outline-none focus:border-[#86A873] transition" placeholder="Reference Number">
                 <p class="text-[10px] text-gray-400 mt-3 italic uppercase">Please transfer amount to shop's GCash/E-Wallet</p>
             </div>

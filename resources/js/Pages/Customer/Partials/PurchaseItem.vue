@@ -2,15 +2,31 @@
     <div class="bg-white/5 p-8 rounded-[2rem] border border-white/10 mb-6 shadow-xl backdrop-blur-md">
         <div class="flex justify-between border-b border-white/5 pb-4 mb-6">
             <div>
+                <p class="text-[10px] text-[#86A873] uppercase font-bold tracking-widest mb-1">
+                    {{ item.shop_name || 'Flora Fleur Partner' }}
+                </p>
                 <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">
                     {{ item.type === 'request' ? 'Custom Request' : 'Standard Order' }} #{{ item.order_number }}
                 </p>
-                <span class="px-3 py-1 rounded-full text-[9px] uppercase font-bold" 
-                      :class="item.status === 'approved' || item.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'">
-                    {{ item.status }}
-                </span>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="px-3 py-1 rounded-full text-[9px] uppercase font-bold" 
+                          :class="item.status === 'approved' || item.status === 'completed' || item.status === 'Delivered' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'">
+                        {{ item.status }}
+                    </span>
+                    <span v-if="item.payment_reference" class="text-[9px] opacity-50 italic">
+                        Ref: {{ item.payment_reference }}
+                    </span>
+                </div>
             </div>
-            <div class="text-right text-[10px] opacity-40 uppercase tracking-tighter">{{ item.created_at }}</div>
+            <div class="text-right flex flex-col items-end gap-2">
+                <p class="text-[10px] opacity-40 uppercase tracking-tighter">{{ item.created_at }}</p>
+                <div class="flex gap-2">
+                    <button @click="$emit('open-receipt', item.id, item.type || 'order')" 
+                            class="bg-white/10 hover:bg-[#86A873] text-white px-4 py-1.5 rounded-full text-[10px] font-bold border-none cursor-pointer transition">
+                        RECEIPT
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="space-y-4">
@@ -24,11 +40,13 @@
                             </div>
                         </div>
                         <div>
-                            <p class="font-bold text-sm text-white">{{ prod.name }}</p>
+                            <p class="font-bold text-sm text-white">{{ prod.name || prod.product_name }}</p>
                             <p class="text-[11px] text-[#86A873]">{{ formatPrice(prod.price) }} × {{ prod.quantity }}</p>
                         </div>
                     </div>
-                    <span class="font-bold text-sm text-gray-300">{{ formatPrice(prod.price * prod.quantity) }}</span>
+                    <span class="font-bold text-sm text-gray-300">
+                        {{ formatPrice(Number(prod.price || 0) * Number(prod.quantity || 0)) }}
+                    </span>
                 </div>
             </template>
 
@@ -44,7 +62,9 @@
                 <i class="fa-solid fa-motorcycle text-[#86A873] text-xs"></i>
                 <span class="text-xs font-bold text-white">{{ item.driver_name }}</span>
             </div>
-            <div v-else class="text-[10px] italic opacity-30">Awaiting Driver Assignment</div>
+            <div v-else class="text-[10px] italic opacity-30 flex items-center gap-2">
+                <i class="fa-solid fa-clock"></i> Awaiting Driver Assignment
+            </div>
 
             <div class="text-right">
                 <p class="text-[10px] uppercase font-bold opacity-40 mb-1">Total Amount</p>
@@ -58,6 +78,8 @@
 const props = defineProps({
     item: Object
 });
+
+defineEmits(['open-receipt']);
 
 const formatPrice = (p) => {
     const val = parseFloat(p || 0);

@@ -4,6 +4,7 @@
             <button @click="$emit('close')" class="absolute top-6 right-8 text-gray-400 text-4xl font-light border-none bg-transparent cursor-pointer hover:text-red-500 transition z-10">&times;</button>
             <div class="w-full md:w-1/2 h-80 md:h-[600px] shadow-2xl"><img :src="product.image" class="w-full h-full object-cover"></div>
             <div class="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center">
+                <p class="text-[10px] text-[#86A873] uppercase font-bold tracking-widest mb-2">{{ product.shop_name }}</p>
                 <h3 class="text-4xl md:text-5xl font-rosarivo mb-6 leading-tight">{{ product.name }}</h3>
                 <p class="text-gray-500 mb-10 leading-relaxed font-light">{{ product.description || 'Premium arrangement handcrafted with Surigao blooms.' }}</p>
                 <div class="flex justify-between items-center mb-10 border-y py-8 border-gray-100">

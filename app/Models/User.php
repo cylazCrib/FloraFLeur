@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
@@ -49,13 +50,26 @@ class User extends Authenticatable
         ];
     }
 
-    public function shop()
+    // app/Models/User.php
+
+    // 1. Define the "Vendor" relationship
+    public function ownedShop()
     {
-        // If user is a vendor, they own a shop
-        if ($this->role === 'vendor') {
-             return $this->hasOne(Shop::class, 'user_id');
-        }
-        // If user is staff, they belong to a shop
+        return $this->hasOne(Shop::class, 'user_id');
+    }
+
+    // 2. Define the "Staff" relationship
+    public function assignedShop()
+    {
         return $this->belongsTo(Shop::class, 'shop_id');
+    }
+
+    // 3. Create the dynamic "shop" property
+    public function getShopAttribute()
+    {
+        if (strtolower($this->role) === 'vendor') {
+            return $this->ownedShop;
+        }
+        return $this->assignedShop;
     }
 }

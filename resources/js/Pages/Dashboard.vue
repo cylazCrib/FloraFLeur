@@ -23,12 +23,12 @@ defineProps({
 </script>
 
 <template>
-    <Head title="Vendor Dashboard" />
+    <Head title="Generic Dashboard" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Vendor Dashboard
+                Generic Dashboard
             </h2>
         </template>
 

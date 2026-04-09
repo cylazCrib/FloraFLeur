@@ -74,13 +74,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Modal Controls ---
-    if (loginBtn) loginBtn.addEventListener('click', () => showModal(signinModal));
-    if (signupBtn) signupBtn.addEventListener('click', () => showModal(signupModal));
-    if (signupStoreBtn) signupStoreBtn.addEventListener('click', () => showModal(signupStoreModal));
-    if (adminLoginBtn) adminLoginBtn.addEventListener('click', () => showModal(adminLoginModal));
-    if (registerShopBtn) registerShopBtn.addEventListener('click', () => showModal(signupStoreModal));
+    if (loginBtn) loginBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showModal(signinModal);
+    });
+    if (signupBtn) signupBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showModal(signupModal);
+    });
+    if (signupStoreBtn) signupStoreBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showModal(signupStoreModal);
+    });
+    if (adminLoginBtn) adminLoginBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showModal(adminLoginModal);
+    });
+    if (registerShopBtn) registerShopBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showModal(signupStoreModal);
+    });
     
-    if (mobileRegisterBtn) mobileRegisterBtn.addEventListener('click', () => {
+    if (mobileRegisterBtn) mobileRegisterBtn.addEventListener('click', (e) => {
+        e.preventDefault();
         showModal(signupStoreModal);
         if (mobileMenu) mobileMenu.classList.add('hidden');
     });
@@ -154,7 +170,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Otherwise, parse JSON
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            console.error("Failed to parse JSON response", e);
+            errorDiv.innerHTML = 'An unexpected server error occurred. Please try again later.';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
 
         if (response.ok) {
             showToast(data.message || 'Success! Redirecting...');

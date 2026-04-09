@@ -55,6 +55,22 @@
             </div>
         </header>
 
+        @if (session('status'))
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative container mx-auto mt-4" role="alert">
+                <span class="block sm:inline">{{ session('status') }}</span>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative container mx-auto mt-4" role="alert">
+                <ul class="list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <main class="flex-grow">
             @yield('content')
         </main>
@@ -226,7 +242,7 @@
             <h1 class="text-5xl font-serif font-bold text-center mb-2">Create Your Shop</h1>
             <p class="text-center text-gray-300 mb-8">Just fill out a quick form to get started!</p>
             
-           <form id="store-signup-form" data-action="{{ route('shop.register') }}" enctype="multipart/form-data">
+           <form id="store-signup-form" method="POST" action="{{ route('shop.register') }}" enctype="multipart/form-data">
                 @csrf
                 <div id="store-signup-errors" class="mb-4 text-red-400 text-sm hidden">
                     <ul id="store-signup-error-list"></ul>

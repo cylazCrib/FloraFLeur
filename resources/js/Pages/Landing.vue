@@ -2,6 +2,13 @@
 import { ref, onMounted } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 
+// --- PROPS ---
+const props = defineProps({
+    canLogin: { type: Boolean },
+    canRegister: { type: Boolean },
+    status: { type: String },
+});
+
 // --- STATE MANAGEMENT (Matches landing.js functionality) ---
 const activeModal = ref(null); // 'signin', 'signup', 'admin', 'shop-signup'
 const showMobileMenu = ref(false);
@@ -13,7 +20,6 @@ const fileLabelText = ref('DTI/Business Permit (PDF, JPG, PNG)');
 // --- FORMS (Replaces manual form logic) ---
 const loginForm = useForm({ email: '', password: '', remember: false, login_as_vendor: false });
 const signupForm = useForm({ name: '', email: '', password: '', password_confirmation: '' });
-const adminLoginForm = useForm({ email: '', password: '' });
 const storeSignupForm = useForm({ 
     owner_name: '', email: '', password: '', password_confirmation: '', owner_phone: '',
     shop_name: '', shop_description: '', shop_phone: '', address: '', zip_code: '',
@@ -50,10 +56,14 @@ const handleFileSelect = (e) => {
 // --- FORM SUBMISSIONS (Matches landing.js logic & redirects) ---
 const submitLogin = () => {
     loginForm.post(route('login'), {
+        // We removed window.location.href because the Controller 
+        // handles the redirect to the correct dashboard.
         onSuccess: () => {
             const msg = loginForm.login_as_vendor ? 'Vendor login successful!' : 'Welcome back!';
             triggerToast(msg);
             closeModal();
+            // Inertia will now automatically transition the page 
+            // based on the Controller's redirect response.
         },
         onFinish: () => loginForm.reset('password'),
     });
@@ -62,13 +72,26 @@ const submitLogin = () => {
 const submitSignup = () => {
     signupForm.post(route('register'), {
         onSuccess: () => {
-            triggerToast('Account created successfully! Welcome to Flora Fleur.');
-            closeModal();
+            window.location.href = route('dashboard');
         },
     });
 };
 
+const submitStoreSignup = () => {
+    storeSignupForm.post(route('shop.register'), {
+        onSuccess: () => {
+            window.location.href = route('dashboard');
+        },
+        onError: (errors) => {
+            console.error('Store signup errors:', errors);
+        }
+    });
+};
+
 onMounted(() => {
+    if (props.status) {
+        triggerToast(props.status, 'success');
+    }
     // Handle Escape key to close modals
     window.addEventListener('keydown', (e) => { if (e.key === "Escape") closeModal(); });
 });
@@ -336,7 +359,11 @@ onMounted(() => {
                     </div>
                 </div>
                 <form @submit.prevent="submitLogin" class="mt-10 space-y-8">
-                    <div id="signin-errors" class="text-red-400 text-sm hidden"></div>
+                    <div v-if="Object.keys(loginForm.errors).length > 0" class="text-red-400 text-sm">
+                        <ul class="list-disc list-inside">
+                            <li v-for="error in loginForm.errors" :key="error">{{ error }}</li>
+                        </ul>
+                    </div>
                     <div class="relative">
                         <label for="signin-email" class="text-sm font-medium text-gray-200">Email</label>
                         <input v-model="loginForm.email" id="signin-email" type="email" placeholder="Email" class="w-full form-input-style" required>
@@ -380,7 +407,11 @@ onMounted(() => {
                     </div>
                 </div>
                 <form @submit.prevent="submitSignup" class="mt-10 space-y-8">
-                    <div id="signup-errors" class="text-red-400 text-sm hidden"></div>
+                    <div v-if="Object.keys(signupForm.errors).length > 0" class="text-red-400 text-sm">
+                        <ul class="list-disc list-inside">
+                            <li v-for="error in signupForm.errors" :key="error">{{ error }}</li>
+                        </ul>
+                    </div>
                     <div class="relative">
                         <label for="signup-name" class="text-sm font-medium text-gray-200">Name</label>
                         <input v-model="signupForm.name" id="signup-name" type="text" placeholder="Name" class="w-full form-input-style" required>
@@ -412,9 +443,11 @@ onMounted(() => {
                 <h1 class="text-5xl font-serif font-bold text-center mb-2">Create Your Shop</h1>
                 <p class="text-center text-gray-300 mb-8">Just fill out a quick form to get started!</p>
                 
-                <form @submit.prevent="submitSignup" class="space-y-6">
-                    <div id="store-signup-errors" class="mb-4 text-red-400 text-sm hidden">
-                        <ul id="store-signup-error-list"></ul>
+                <form @submit.prevent="submitStoreSignup" class="space-y-6">
+                    <div v-if="Object.keys(storeSignupForm.errors).length > 0" class="mb-4 text-red-400 text-sm">
+                        <ul class="list-disc list-inside">
+                            <li v-for="error in storeSignupForm.errors" :key="error">{{ error }}</li>
+                        </ul>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                         <div class="space-y-6">

@@ -47,6 +47,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // Since RegisteredUserController only creates customers by default
+        return redirect()->route('customer.dashboard');
     }
 }

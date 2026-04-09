@@ -32,7 +32,10 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                // Load both possible relationships so the frontend has the data
+                'user' => $request->user() 
+                    ? $request->user()->load(['ownedShop', 'assignedShop']) 
+                    : null,
             ],
         ];
     }

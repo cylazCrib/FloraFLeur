@@ -23,7 +23,14 @@ class VendorController extends Controller
         $user = Auth::user();
         $shop = $user->shop;
 
-        if (!$shop) return Inertia::render('Dashboard', ['error' => 'No shop found for this user.']);
+        if (!$shop) {
+             return redirect()->route('landing')->with('status', 'No shop associated with your account.');
+        }
+
+        $shopStatus = strtolower($shop->status ?? '');
+        if (!in_array($shopStatus, ['approved', 'active'])) {
+             return redirect()->route('landing')->with('status', 'Your shop is still pending approval.');
+        }
 
         // --- 1. CALCULATE TOTAL SALES (Orders + Requests) ---
         $orderSales = Order::where('shop_id', $shop->id)->whereIn('status', ['Delivered', 'Completed'])->sum('total_amount');
@@ -40,11 +47,22 @@ class VendorController extends Controller
         // --- 3. FETCH LISTS ---
         $recentOrders = Order::with('items')->where('shop_id', $shop->id)->latest()->take(5)->get();
         $orders = Order::with(['items', 'user'])->where('shop_id', $shop->id)->latest()->get();
-        $products = $shop->products()->latest()->get();
+        $products = $shop->products()->latest()->get()->map(function($p) {
+            return [
+                'id' => $p->id,
+                'name' => $p->name,
+                'description' => $p->description,
+                'price' => $p->price,
+                'image' => $p->image ? Storage::url($p->image) : null,
+                'category' => $p->category,
+                'occasion' => $p->occasion,
+                'quantity' => $p->quantity,
+            ];
+        });
         
         $inventory = InventoryItem::where('shop_id', $shop->id)->latest()->get();
-        $items = $inventory->where('type', 'item');
-        $flowers = $inventory->where('type', 'flower');
+        $items = $inventory->where('type', 'item')->values();
+        $flowers = $inventory->where('type', 'flower')->values();
         
         $staff = Staff::where('shop_id', $shop->id)->latest()->get();
         $drivers = Staff::where('shop_id', $shop->id)->where('role', 'Driver')->get();
@@ -54,7 +72,7 @@ class VendorController extends Controller
             ->latest()
             ->get();
 
-        return Inertia::render('Dashboard', compact(
+        return Inertia::render('Vendor/Dashboard', compact(
             'totalSales', 'totalOrders', 'pendingOrders', 'deliveredOrders',
             'inventoryCount', 'lowStockCount', 'recentOrders',
             'orders', 'products', 'inventory', 'items', 'flowers', 'staff', 'drivers', 'customRequests'

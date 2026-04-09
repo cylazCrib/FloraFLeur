@@ -9,24 +9,25 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-  public function up(): void
+    public function up(): void
     {
-        Schema::create('order_items', function (Blueprint $table) {
+        Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            
-            // Link to the order
-            $table->foreignId('order_id')->constrained()->onDelete('cascade');
-            
-            // Link to the product (optional, in case product is deleted later, we keep the data)
-            $table->foreignId('product_id')->nullable()->constrained()->onDelete('set null');
-            
-            $table->string('product_name');
-            $table->integer('quantity');
-            $table->decimal('price', 10, 2); // Price at the time of purchase
-            
+            $table->foreignId('shop_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+            $table->string('order_number')->unique();
+            $table->string('customer_name');
+            $table->string('customer_phone')->nullable();
+            $table->string('customer_email')->nullable();
+            $table->text('delivery_address')->nullable();
+            $table->date('delivery_date')->nullable();
+            $table->decimal('total_amount', 10, 2);
+            $table->string('status')->default('Pending');
+            $table->string('driver_name')->nullable();
             $table->timestamps();
         });
     }
+
     /**
      * Reverse the migrations.
      */

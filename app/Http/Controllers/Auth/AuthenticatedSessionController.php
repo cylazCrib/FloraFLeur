@@ -30,10 +30,30 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = Auth::user();
+        $role = $user->role; // Assuming 'admin', 'vendor', 'staff', 'customer'
+
+        // 1. Admin Logic
+        if ($role === 'admin' || $user->email === 'admin@florafleur.com') {
+            return redirect()->intended(route('admin.dashboard'));
+        }
+
+        // 2. Vendor / Staff Logic
+        if ($role === 'vendor' || $role === 'staff') {
+            $shop = $user->shop; // Ensure your User model has: public function shop() { return $this->hasOne(Shop::class); }
+            
+            // If they are a vendor but the shop isn't approved, send back to landing with message
+            if ($role === 'vendor' && (!$shop || !in_array($shop->status, ['approved', 'active']))) {
+                return redirect()->route('landing')->with('status', 'Your shop is pending approval.');
+            }
+
+            return redirect()->intended(route('vendor.dashboard'));
+        }
+
+        // 3. Default (Customer)
+        return redirect()->intended(route('customer.dashboard'));
     }
 
     /**

@@ -7,6 +7,7 @@
             <img :src="product.image" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
         </div>
         <div class="p-6 text-center text-gray-900">
+            <p class="text-[10px] text-[#86A873] uppercase font-bold tracking-widest mb-1">{{ product.shop_name }}</p>
             <h3 class="font-rosarivo text-lg mb-1">{{ product.name }}</h3>
             <p class="text-[#86A873] font-bold text-xl">{{ formatPrice(product.price) }}</p>
             <button @click="$emit('open-modal', product)" class="w-full bg-[#4A4A3A] text-white py-3 rounded-xl mt-4 hover:bg-[#86A873] transition-colors border-none cursor-pointer text-xs font-bold tracking-widest uppercase">Details</button>

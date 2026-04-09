@@ -19,29 +19,29 @@ class AdminController extends Controller
         $stats = [
             'active_vendors' => Shop::whereIn('status', ['Active', 'active', 'approved', 'Approved'])->count(),
             'pending_shops'  => Shop::whereIn('status', ['Pending', 'pending'])->count(),
-            'total_users'    => User::where('role', 'customer')->count(),
-            'total_products' => Product::count()
+            'total_customers' => User::where('role', 'customer')->count(),
+            'total_products' => Product::count(),
+            'total_orders'   => Order::count(),
+            'total_revenue'  => Order::whereIn('status', ['Delivered', 'Completed'])->sum('total_amount') + \App\Models\CustomRequest::whereIn('status', ['Delivered', 'Completed'])->sum('vendor_quote'),
         ];
 
         // 2. LISTS
-        // Catches 'pending' and 'Pending'
         $pendingShops = Shop::with('user')
             ->whereIn('status', ['Pending', 'pending'])
             ->latest()
             ->get();
         
-        // Catches all active variations
         $activeShops = Shop::with('user')
             ->whereIn('status', ['Active', 'active', 'approved', 'Approved', 'Suspended', 'suspended'])
             ->latest()
             ->get();
         
-        // Owners for Activity Log
-        $owners = Shop::with('user')
-            ->whereIn('status', ['Active', 'active', 'approved', 'Approved', 'Suspended', 'suspended'])
-            ->get();
+        $allOrders = Order::with(['shop', 'user'])->latest()->take(10)->get();
+        $allRequests = \App\Models\CustomRequest::with(['shop', 'user'])->latest()->take(10)->get();
+        $allCustomers = User::where('role', 'customer')->latest()->take(10)->get();
+        $owners = $activeShops;
 
-        return Inertia::render('Admin/Dashboard', compact('stats', 'pendingShops', 'activeShops', 'owners'));
+        return Inertia::render('Admin/Dashboard', compact('stats', 'pendingShops', 'activeShops', 'allOrders', 'allRequests', 'allCustomers', 'owners'));
     }
 
     // --- AJAX ACTIONS ---
@@ -74,7 +74,12 @@ class AdminController extends Controller
                 'status' => 'Success'
             ]]);
 
-            $activity = $orders->merge($products)->merge($joined)->sortByDesc('date')->values();
+            // Convert all to standard collections for merging
+            $ordersColl = collect($orders);
+            $productsColl = collect($products);
+            $joinedColl = collect($joined);
+
+            $activity = $ordersColl->merge($productsColl)->merge($joinedColl)->sortByDesc('date')->values();
 
             return response()->json([
                 'shop' => $shop->name,
@@ -92,8 +97,12 @@ class AdminController extends Controller
     {
         $shop = Shop::findOrFail($id);
         $shop->update(['status' => 'approved']); 
-        if($shop->user) $shop->user->update(['role' => 'vendor']);
-        return response()->json(['message' => 'Shop approved']);
+        
+        if ($shop->user) {
+            $shop->user->update(['role' => 'vendor']);
+        }
+        
+        return response()->json(['message' => 'Shop approved successfully!']);
     }
 
     public function rejectShop($id)

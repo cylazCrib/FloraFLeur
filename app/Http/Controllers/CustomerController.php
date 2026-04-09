@@ -17,12 +17,11 @@ use Inertia\Inertia;
 class CustomerController extends Controller
 {
     /**
-     * Display the Customer Dashboard with all required data.
+     * Display the Customer Dashboard with all required data properly formatted.
      */
     public function dashboard()
     {
-        // 1. Fetch products (Shop Grid & Favorites source)
-        // [FIX] Ensuring all main products have valid public image URLs
+        // 1. Fetch products (Main Shop Grid & Favorites source)
         $products = Product::latest()->get()->map(fn($p) => [
             'id' => $p->id,
             'name' => $p->name,
@@ -31,11 +30,13 @@ class CustomerController extends Controller
             'image' => $p->image ? Storage::url($p->image) : null,
             'category' => $p->category ?? 'bouquet',
             'occasion' => $p->occasion ?? 'all',
-            'shop_id' => $p->shop_id
+            'shop_id' => $p->shop_id,
+            'shop_name' => $p->shop->name ?? 'Flora Fleur Partner'
         ]);
         
-        // 2. Standard Orders
-        $orders = Order::with('items')
+        // 2. Standard Orders (Purchase History + Receipt Data)
+        // [FIX] Eager loading 'shop' through the order to show the florist name on receipt
+        $orders = Order::with(['items', 'shop'])
             ->where('user_id', Auth::id())
             ->latest()
             ->get()
@@ -48,7 +49,10 @@ class CustomerController extends Controller
                     'total_amount' => (float)$order->total_amount,
                     'driver_name' => $order->driver_name,
                     'payment_method' => $order->payment_method,
-                    'created_at' => $order->created_at->format('M d, Y'),
+                    'payment_reference' => $order->payment_reference,
+                    // [NEW] Shop info for the receipt header
+                    'shop_name' => $order->shop->name ?? 'Flora Fleur Partner',
+                    'created_at' => $order->created_at->format('M d, Y h:i A'),
                     'items' => $order->items->map(fn($item) => [
                         'name' => $item->product_name,
                         'price' => (float)$item->price,
@@ -58,8 +62,8 @@ class CustomerController extends Controller
                 ];
             });
 
-        // 3. Custom Requests
-        $requests = CustomRequest::where('user_id', Auth::id())
+        // 3. Custom Requests (Mapped for history UI)
+        $requests = CustomRequest::with('shop')->where('user_id', Auth::id())
             ->latest()
             ->get()
             ->map(function($req) {
@@ -73,14 +77,15 @@ class CustomerController extends Controller
                     'budget' => (float)$req->budget,
                     'vendor_quote' => $req->vendor_quote ? (float)$req->vendor_quote : null,
                     'driver_name' => $req->driver_name ?? null,
-                    'created_at' => $req->created_at->format('M d, Y'),
+                    'payment_method' => 'Custom Quote',
+                    'shop_name' => $req->shop->name ?? 'Flora Fleur Partner',
+                    'created_at' => $req->created_at->format('M d, Y h:i A'),
                     'occasion' => $req->occasion,
                     'items' => [], 
                 ];
             });
 
-        // 4. Fetch Shops
-        // [FIX] Deep mapping the nested products inside each shop to load images correctly
+        // 4. Fetch Shops with nested products
         $shops = Shop::where('status', 'approved')
             ->with('products')
             ->latest()
@@ -93,11 +98,14 @@ class CustomerController extends Controller
                     'address' => $shop->address,
                     'phone' => $shop->phone,
                     'email' => $shop->email,
+                    'gcash_qr_url' => $shop->gcash_qr_url,
+                    'maya_qr_url' => $shop->maya_qr_url,
+                    'payment_instructions' => $shop->payment_instructions,
                     'products' => $shop->products->map(fn($p) => [
                         'id' => $p->id,
                         'name' => $p->name,
                         'price' => (float)$p->price,
-                        'image' => $p->image ? Storage::url($p->image) : null, // Fix for Shop Products image
+                        'image' => $p->image ? Storage::url($p->image) : null,
                         'category' => $p->category,
                         'occasion' => $p->occasion
                     ])
@@ -115,8 +123,9 @@ class CustomerController extends Controller
             'user' => Auth::user()
         ]);
     }
+
     /**
-     * Handle the checkout process (Multi-shop grouping support).
+     * Handle multi-shop checkout and order creation.
      */
     public function storeOrder(Request $request)
     {
@@ -129,7 +138,6 @@ class CustomerController extends Controller
         $cartItems = $request->items;
         $ordersByShop = [];
 
-        // 1. Group items by their shop_id to create separate orders
         foreach ($cartItems as $item) {
             $product = Product::find($item['id']);
             if (!$product) continue;
@@ -139,7 +147,6 @@ class CustomerController extends Controller
                 $ordersByShop[$shopId] = ['shop_id' => $shopId, 'items' => [], 'total' => 0];
             }
 
-            // Clean price: removes currency symbols if present in DB string
             $cleanPrice = (float) str_replace([',', '₱', ' '], '', $product->price);
             $qty = (int) $item['qty'];
 
@@ -148,7 +155,7 @@ class CustomerController extends Controller
                 'product_name' => $product->name,
                 'price' => $cleanPrice,
                 'qty' => $qty,
-                'image' => $product->getRawOriginal('image') // Capture path for history
+                'image' => $product->getRawOriginal('image') 
             ];
             
             $ordersByShop[$shopId]['total'] += $cleanPrice * $qty;
@@ -157,7 +164,6 @@ class CustomerController extends Controller
         DB::beginTransaction();
         try {
             foreach ($ordersByShop as $shopData) {
-                // 2. Create the Parent Order for this shop
                 $order = Order::create([
                     'shop_id' => $shopData['shop_id'],
                     'user_id' => $user->id,
@@ -169,10 +175,10 @@ class CustomerController extends Controller
                     'delivery_date' => now()->addDays(3),
                     'total_amount' => $shopData['total'],
                     'status' => 'Pending',
-                    'payment_method' => $request->payment_method
+                    'payment_method' => $request->payment_method,
+                    'payment_reference' => $request->payment_reference
                 ]);
 
-                // 3. Create individual items for this order
                 foreach ($shopData['items'] as $itemData) {
                     OrderItem::create([
                         'order_id' => $order->id,
@@ -184,18 +190,16 @@ class CustomerController extends Controller
                     ]);
                 }
             }
-            
             DB::commit();
-            return redirect()->back()->with('success', 'Order placed successfully!');
+            return redirect()->back();
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Order Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Error placing order.');
         }
     }
 
     /**
-     * Submit a custom floral request.
+     * Submit a bespoke floral design request.
      */
     public function storeRequest(Request $request)
     {
@@ -219,11 +223,11 @@ class CustomerController extends Controller
             'status' => 'pending'
         ]);
 
-        return redirect()->back()->with('message', 'Custom request sent successfully!');
+        return redirect()->back();
     }
 
     /**
-     * Update user profile information.
+     * Update user account details.
      */
     public function updateProfile(Request $request)
     {
@@ -238,6 +242,6 @@ class CustomerController extends Controller
 
         $user->update($request->only(['name', 'email', 'phone', 'address']));
 
-        return redirect()->back()->with('success', 'Profile updated!');
+        return redirect()->back();
     }
 }
